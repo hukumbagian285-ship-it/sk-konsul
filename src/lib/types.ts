@@ -19,7 +19,6 @@ export const STATUS_URUTAN: StatusSK[] = [
   "Selesai",
 ];
 
-// Warna semantik per status — dipakai konsisten di badge & kolom kanban
 export const STATUS_WARNA: Record<StatusSK, string> = {
   "Draft Masuk": "bg-slate-100 text-slate-700 border-slate-300",
   "Pemeriksaan Berkas": "bg-blue-50 text-primary border-blue-200",
@@ -29,9 +28,6 @@ export const STATUS_WARNA: Record<StatusSK, string> = {
   Selesai: "bg-emerald-600 text-white border-emerald-700",
 };
 
-// Transisi status yang sah per role — cermin dari Bagian 4.2 spec & trigger DB
-// Dipakai untuk menyembunyikan/menonaktifkan aksi yang tidak sah di UI
-// (validasi sesungguhnya tetap ditegakkan trigger validate_status_transition di DB)
 export const TRANSISI_SAH: Record<Role, Partial<Record<StatusSK, StatusSK[]>>> = {
   super_admin: {
     "Draft Masuk": ["Pemeriksaan Berkas"],
@@ -116,6 +112,7 @@ export interface SkComment {
   user_nama?: string;
   komentar: string;
   lokasi_pasal: string | null;
+  halaman: number | null;
   created_at: string;
 }
 
@@ -128,4 +125,9 @@ export interface SkStatusHistory {
   diubah_oleh_nama?: string;
   catatan: string | null;
   created_at: string;
+}
+
+export function statusProgress(status: StatusSK): { current: number; total: number } {
+  const idx = STATUS_URUTAN.indexOf(status);
+  return { current: idx + 1, total: STATUS_URUTAN.length };
 }

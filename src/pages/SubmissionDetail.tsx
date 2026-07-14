@@ -1,18 +1,17 @@
-import * as React from "react";
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, FileText, MessageSquare, History, UploadCloud, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, History, UploadCloud, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/input";
 import { STATUS_WARNA, TRANSISI_SAH, type StatusSK } from "@/lib/types";
 import { formatTanggal, cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { useSubmission, useVersions, useStatusHistory, useCreateComment, useUpdateStatus } from "@/lib/api";
+import { useSubmission, useVersions, useStatusHistory, useUpdateStatus } from "@/lib/api";
 import PdfViewer from "@/components/PdfViewer";
 import CommentSidebar from "@/components/CommentSidebar";
 import FinalisasiModal from "@/components/FinalisasiModal";
-import { supabase } from "@/lib/supabase";
 
 export default function SubmissionDetail() {
   const { id } = useParams();
@@ -22,8 +21,8 @@ export default function SubmissionDetail() {
   const { data: history } = useStatusHistory(id);
   const updateStatus = useUpdateStatus();
 
-  const [showFinalModal, setShowFinalModal] = React.useState(false);
-  const [currentPage, setCurrentPage] = React.useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showFinalModal, setShowFinalModal] = useState(false);
 
   if (isLoading) return <div className="flex justify-center py-20"><Loader2 size={24} className="animate-spin text-muted-foreground" /></div>;
   if (!submission || !user) {
@@ -33,22 +32,27 @@ export default function SubmissionDetail() {
   const usr = user!;
 
   const role = usr.role ?? "pemohon";
-  const bolehUploadVersi = (role === "pemohon" && sub.pemohon_id === usr.id) || role === "super_admin";
+  const bolehKomentar = role === "staf_hukum" || role === "pimpinan" || role === "super_admin";
   const transisiTersedia = TRANSISI_SAH[role]?.[sub.status] ?? [];
+  const bolehUploadVersi = (role === "pemohon" && sub.pemohon_id === usr.id) || role === "super_admin";
   const latestVersion = (versions ?? [])[0];
 
-  async function handleTransisi(status: StatusSK) {
+  function handleTransisi(status: StatusSK) {
     if (status === "Finalisasi") {
       setShowFinalModal(true);
       return;
     }
-    await updateStatus.mutateAsync({ id: sub!.id, status });
+    updateStatus.mutateAsync({ id: sub!.id, status });
   }
 
   async function handleFinalisasi(nomorSk: string) {
     await updateStatus.mutateAsync({ id: sub!.id, status: "Finalisasi" as StatusSK });
     await supabase.from("sk_submissions").update({ nomor_sk: nomorSk }).eq("id", sub!.id);
     setShowFinalModal(false);
+  }
+
+  function onJumpToPage(page: number) {
+    setCurrentPage(page);
   }
 
   return (
@@ -95,30 +99,44 @@ export default function SubmissionDetail() {
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
-        <div className="space-y-6">
-          {latestVersion ? (
-            <Card>
-              <CardContent className="p-2">
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><FileText size={16} /> Dokumen</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {latestVersion ? (
                 <PdfViewer driveFileId={latestVersion.drive_file_id} onPageChange={setCurrentPage} />
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                Belum ada dokumen diunggah.
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <p className="text-sm text-muted-foreground">Belum ada dokumen.</p>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-6">
-          {latestVersion && (
-            <CommentSidebar
-              submissionId={sub.id}
-              versionId={latestVersion.id}
-              currentPage={currentPage}
-              onJumpToPage={(p) => setCurrentPage(p)}
-            />
+          {bolehUploadVersi && (
+            <Card>
+              <CardContent className="p-4">
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-border py-3 text-sm text-muted-foreground hover:bg-muted">
+                  <UploadCloud size={16} /> Unggah versi revisi
+                  <input type="file" className="hidden" />
+                </label>
+              </CardContent>
+            </Card>
+          )}
+
+          {bolehKomentar && (
+            <Card>
+              <CardContent className="p-4">
+                <CommentSidebar
+                  submissionId={sub.id}
+                  versionId={latestVersion?.id ?? ""}
+                  currentPage={currentPage}
+                  onJumpToPage={onJumpToPage}
+                />
+              </CardContent>
+            </Card>
           )}
 
           <Card>
@@ -139,13 +157,6 @@ export default function SubmissionDetail() {
               </ol>
             </CardContent>
           </Card>
-
-          {bolehUploadVersi && (
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-border py-3 text-sm text-muted-foreground hover:bg-muted">
-              <UploadCloud size={16} /> Unggah versi revisi
-              <input type="file" className="hidden" />
-            </label>
-          )}
         </div>
       </div>
 

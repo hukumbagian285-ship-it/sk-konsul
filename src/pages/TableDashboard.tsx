@@ -3,7 +3,7 @@ import { useSubmissions } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Search } from "lucide-react";
 import { formatTanggal } from "@/lib/utils";
-import { STATUS_WARNA, statusProgress } from "@/lib/types";
+import { STATUS_WARNA } from "@/lib/types";
 import { useState } from "react";
 
 export default function TableDashboard() {
