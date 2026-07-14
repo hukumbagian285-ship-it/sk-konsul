@@ -139,7 +139,7 @@ export default function SubmissionDetail() {
                           setUploading(true);
                           setUploadStatus("idle");
                           try {
-                            const folderPath = `${(sub as any).instansi_nama ?? "unknown"}/${sub.nomor_tiket}`;
+                            const folderPath = `${sub.instansi_id ?? "unknown"}/${sub.nomor_tiket}`;
                             const gasResult = await uploadViaGas(file, folderPath);
                             await createVersion.mutateAsync({
                               submission_id: sub.id,
