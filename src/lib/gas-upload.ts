@@ -60,9 +60,10 @@ export async function uploadViaGas(file: File, folderPath: string): Promise<GasU
 
   const base64Data = await toBase64(file);
 
+  // text/plain biar ga trigger CORS preflight (GAS Web App ga handle OPTIONS)
   const response = await fetch(GAS_UPLOAD_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({
       token: GAS_UPLOAD_TOKEN,
       folderPath,
