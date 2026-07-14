@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { Building2, Loader2, FileText, Clock, CheckCircle, Search } from "lucide-react";
+import { Building2, Loader2, Search } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -58,61 +58,12 @@ export default function DashboardKanban() {
     });
   }, [submissions, filterKategori, filterInstansi, search]);
 
-  const stats = React.useMemo(() => {
-    const total = visible.length;
-    const counts: Record<string, number> = {};
-    STATUS_URUTAN.forEach((s) => { counts[s] = 0; });
-    visible.forEach((s) => { counts[s.status] = (counts[s.status] || 0) + 1; });
-    return { total, counts };
-  }, [visible]);
-
   if (isLoading) {
     return <div className="flex justify-center py-20"><Loader2 size={24} className="animate-spin text-muted-foreground" /></div>;
   }
 
   return (
     <div>
-      {/* stats row */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <FileText size={20} />
-            </span>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-              <p className="text-xs text-muted-foreground">Total</p>
-            </div>
-          </CardContent>
-        </Card>
-        {STATUS_URUTAN.slice(0, 3).map((s) => (
-          <Card key={s}>
-            <CardContent className="flex items-center gap-3 p-4">
-              <span className={`flex h-10 w-10 items-center justify-center rounded-lg ${s === "Draft Masuk" ? "bg-slate-100 text-slate-600" : s === "Pemeriksaan Berkas" ? "bg-blue-50 text-blue-600" : "bg-indigo-50 text-indigo-600"}`}>
-                <Clock size={20} />
-              </span>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{stats.counts[s]}</p>
-                <p className="text-xs text-muted-foreground leading-tight">{s}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        {STATUS_URUTAN.slice(3).map((s) => (
-          <Card key={s}>
-            <CardContent className="flex items-center gap-3 p-4">
-              <span className={`flex h-10 w-10 items-center justify-center rounded-lg ${s === "Revisi Pemohon" ? "bg-amber-50 text-warning" : s === "Finalisasi" ? "bg-emerald-50 text-accent" : "bg-emerald-100 text-emerald-700"}`}>
-                <CheckCircle size={20} />
-              </span>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{stats.counts[s]}</p>
-                <p className="text-xs text-muted-foreground leading-tight">{s}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       {/* filters */}
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="relative">
