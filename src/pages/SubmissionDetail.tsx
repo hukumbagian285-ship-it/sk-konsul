@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, FileText, History, UploadCloud, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, History, UploadCloud, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,8 @@ import { STATUS_WARNA, TRANSISI_SAH, type StatusSK } from "@/lib/types";
 import { formatTanggal, cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { useSubmission, useVersions, useStatusHistory, useUpdateStatus } from "@/lib/api";
+import { useSubmission, useVersions, useStatusHistory, useUpdateStatus, useCreateVersion } from "@/lib/api";
+import { uploadViaGas } from "@/lib/gas-upload";
 import PdfViewer from "@/components/PdfViewer";
 import CommentSidebar from "@/components/CommentSidebar";
 import FinalisasiModal from "@/components/FinalisasiModal";
@@ -21,6 +22,9 @@ export default function SubmissionDetail() {
   const { data: history } = useStatusHistory(id);
   const updateStatus = useUpdateStatus();
 
+  const createVersion = useCreateVersion();
+  const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "error" | "done">("idle");
   const [currentPage, setCurrentPage] = useState(1);
   const [showFinalModal, setShowFinalModal] = useState(false);
 
@@ -118,10 +122,45 @@ export default function SubmissionDetail() {
           {bolehUploadVersi && (
             <Card>
               <CardContent className="p-4">
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-border py-3 text-sm text-muted-foreground hover:bg-muted">
-                  <UploadCloud size={16} /> Unggah versi revisi
-                  <input type="file" className="hidden" />
-                </label>
+                {uploadStatus === "done" ? (
+                  <p className="flex items-center gap-2 text-sm text-accent"><CheckCircle size={16} /> Dokumen berhasil diunggah</p>
+                ) : (
+                  <>
+                    <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed py-3 text-sm hover:bg-muted ${uploadStatus === "error" ? "border-warning text-warning" : "border-border text-muted-foreground"}`}>
+                      <UploadCloud size={16} /> {uploading ? "Mengunggah..." : "Unggah versi revisi"}
+                      <input
+                        type="file"
+                        accept=".docx,.pdf"
+                        className="hidden"
+                        disabled={uploading}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file || !sub) return;
+                          setUploading(true);
+                          setUploadStatus("idle");
+                          try {
+                            const folderPath = `${(sub as any).instansi_nama ?? "unknown"}/${sub.nomor_tiket}`;
+                            const gasResult = await uploadViaGas(file, folderPath);
+                            await createVersion.mutateAsync({
+                              submission_id: sub.id,
+                              drive_file_id: gasResult.drive_file_id,
+                              catatan_perubahan: "Upload dari detail",
+                              diunggah_oleh: usr.id,
+                            });
+                            setUploadStatus("done");
+                          } catch {
+                            setUploadStatus("error");
+                          } finally {
+                            setUploading(false);
+                          }
+                        }}
+                      />
+                    </label>
+                    {uploadStatus === "error" && (
+                      <p className="mt-2 flex items-center gap-1 text-xs text-warning"><AlertCircle size={12} /> Upload gagal. Coba lagi.</p>
+                    )}
+                  </>
+                )}
               </CardContent>
             </Card>
           )}
