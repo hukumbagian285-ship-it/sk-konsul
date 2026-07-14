@@ -112,7 +112,7 @@ export interface SkComment {
   user_nama?: string;
   komentar: string;
   lokasi_pasal: string | null;
-  halaman: number | null;
+  halaman?: number | null;
   created_at: string;
 }
 
