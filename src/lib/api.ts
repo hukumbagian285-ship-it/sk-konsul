@@ -28,7 +28,7 @@ export function useSubmissions(role: string | null, userId: string | undefined) 
     queryFn: async () => {
       let query = supabase
         .from("sk_submissions")
-        .select("*, kategori_nama:sk_categories!kategori_id(nama_kategori), instansi_nama:instansi!instansi_id(nama_instansi)")
+        .select("*, kategori_nama:sk_categories(nama_kategori), instansi_nama:instansi(nama_instansi)")
         .order("created_at", { ascending: false });
 
       if (role === "pemohon" && userId) {
@@ -48,7 +48,7 @@ export function useSubmission(id: string | undefined) {
     queryFn: async () => {
       const { data } = await supabase
         .from("sk_submissions")
-        .select("*, kategori_nama:sk_categories!kategori_id(nama_kategori), instansi_nama:instansi!instansi_id(nama_instansi)")
+        .select("*, kategori_nama:sk_categories(nama_kategori), instansi_nama:instansi(nama_instansi)")
         .eq("id", id)
         .single();
       return data as SkSubmission | null;
@@ -78,7 +78,7 @@ export function useComments(submissionId: string | undefined) {
     queryFn: async () => {
       const { data } = await supabase
         .from("sk_comments")
-        .select("*, user_nama:profiles!user_id(nama_lengkap)")
+        .select("*, user_nama:profiles(nama_lengkap)")
         .eq("submission_id", submissionId)
         .order("created_at", { ascending: true });
       return (data ?? []) as SkComment[];
@@ -93,7 +93,7 @@ export function useStatusHistory(submissionId: string | undefined) {
     queryFn: async () => {
       const { data } = await supabase
         .from("sk_status_history")
-        .select("*, diubah_oleh_nama:profiles!diubah_oleh(nama_lengkap)")
+        .select("*, diubah_oleh_nama:profiles(nama_lengkap)")
         .eq("submission_id", submissionId)
         .order("created_at", { ascending: false });
       return (data ?? []) as SkStatusHistory[];
@@ -242,7 +242,7 @@ export function useAllUsers() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("*, instansi_nama:instansi!instansi_id(nama_instansi)")
+        .select("*, instansi_nama:instansi(nama_instansi)")
         .order("nama_lengkap");
       return (data ?? []) as ProfileWithInstansi[];
     },
