@@ -22,6 +22,9 @@
 }
 
 @layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
   .ticket-tag {
     @apply font-mono text-xs tracking-wide text-muted-foreground;
   }
