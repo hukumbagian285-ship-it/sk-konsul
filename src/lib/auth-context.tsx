@@ -1,34 +1,73 @@
 import * as React from "react";
-import type { Role } from "./types";
-
-// Auth context sementara untuk pengembangan UI sebelum Supabase Auth disambungkan.
-// TODO: ganti isi provider ini dengan session Supabase asli (supabase.auth.getSession()
-// + subscribe onAuthStateChange), lalu ambil `role` dari tabel `profiles`.
+import { supabase } from "@/lib/supabase";
+import type { Role, Profile } from "@/lib/types";
 
 interface AuthUser {
   id: string;
   nama_lengkap: string;
-  role: Role;
+  role: Role | null;
+  instansi_id: string | null;
 }
 
-const DEMO_USERS: Record<Role, AuthUser> = {
-  super_admin: { id: "demo-super-admin", nama_lengkap: "Super Admin", role: "super_admin" },
-  pimpinan: { id: "demo-pimpinan", nama_lengkap: "Ir. Mardiana Kalumbang", role: "pimpinan" },
-  staf_hukum: { id: "demo-staf-hukum", nama_lengkap: "Flafianus Dua", role: "staf_hukum" },
-  pemohon: { id: "demo-pemohon", nama_lengkap: "Achmad Aqil Susanto, S.Kom", role: "pemohon" },
-};
-
 interface AuthContextValue {
-  user: AuthUser;
-  setRole: (role: Role) => void;
+  user: AuthUser | null;
+  loading: boolean;
+  profile: Profile | null;
 }
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRole] = React.useState<Role>("staf_hukum");
-  const value = React.useMemo(() => ({ user: DEMO_USERS[role], setRole }), [role]);
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const [user, setUser] = React.useState<AuthUser | null>(null);
+  const [profile, setProfile] = React.useState<Profile | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        loadProfile(session.user.id);
+      } else {
+        setUser(null);
+        setProfile(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function loadProfile(userId: string) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+
+    if (data) {
+      setProfile(data as Profile);
+      setUser({
+        id: data.id,
+        nama_lengkap: data.nama_lengkap,
+        role: data.role,
+        instansi_id: data.instansi_id,
+      });
+    }
+    setLoading(false);
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, loading, profile }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

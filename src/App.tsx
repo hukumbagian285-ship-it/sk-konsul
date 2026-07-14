@@ -1,36 +1,19 @@
-import { Routes, Route, Link, useLocation } from "react-router-dom";
-import { Scale, FilePlus2 } from "lucide-react";
+import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
+import { Scale, FilePlus2, LogOut, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
-import type { Role } from "@/lib/types";
 import DashboardKanban from "@/pages/DashboardKanban";
 import SubmissionForm from "@/pages/SubmissionForm";
 import SubmissionDetail from "@/pages/SubmissionDetail";
-
-function RoleSwitcher() {
-  const { user, setRole } = useAuth();
-  const roles: Role[] = ["super_admin", "pimpinan", "staf_hukum", "pemohon"];
-  return (
-    <label className="flex items-center gap-2 text-xs text-muted-foreground">
-      Masuk sebagai
-      <select
-        className="rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground"
-        value={user.role}
-        onChange={(e) => setRole(e.target.value as Role)}
-      >
-        {roles.map((r) => (
-          <option key={r} value={r}>
-            {r}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
+import LoginPage from "@/pages/LoginPage";
 
 function Header() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const isForm = location.pathname === "/submissions/new";
+
+  if (loading) return null;
 
   return (
     <header className="border-b border-border bg-card">
@@ -46,7 +29,7 @@ function Header() {
         </Link>
 
         <div className="flex items-center gap-4">
-          {!isForm && (user.role === "pemohon" || user.role === "super_admin") && (
+          {!isForm && user && (user.role === "pemohon" || user.role === "super_admin") && (
             <Link
               to="/submissions/new"
               className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
@@ -55,15 +38,34 @@ function Header() {
               Ajukan SK Baru
             </Link>
           )}
-          <div className="text-right leading-tight">
-            <p className="text-sm font-medium">{user.nama_lengkap}</p>
-            <p className="text-xs capitalize text-muted-foreground">{user.role.replace("_", " ")}</p>
-          </div>
-          <RoleSwitcher />
+          {user && (
+            <div className="flex items-center gap-3">
+              <div className="text-right leading-tight">
+                <p className="text-sm font-medium">{user.nama_lengkap}</p>
+                <p className="text-xs capitalize text-muted-foreground">
+                  {user.role?.replace("_", " ") ?? "—"}
+                </p>
+              </div>
+              <button
+                onClick={() => { supabase.auth.signOut(); navigate("/login"); }}
+                className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"
+                title="Keluar"
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
   );
+}
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="flex justify-center py-20"><Loader2 size={24} className="animate-spin text-muted-foreground" /></div>;
+  if (!user) return <LoginPage />;
+  return <>{children}</>;
 }
 
 function AppShell() {
@@ -72,9 +74,19 @@ function AppShell() {
       <Header />
       <main className="mx-auto max-w-7xl px-6 py-8">
         <Routes>
-          <Route path="/" element={<DashboardKanban />} />
-          <Route path="/submissions/new" element={<SubmissionForm />} />
-          <Route path="/submissions/:id" element={<SubmissionDetail />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/"
+            element={<ProtectedRoute><DashboardKanban /></ProtectedRoute>}
+          />
+          <Route
+            path="/submissions/new"
+            element={<ProtectedRoute><SubmissionForm /></ProtectedRoute>}
+          />
+          <Route
+            path="/submissions/:id"
+            element={<ProtectedRoute><SubmissionDetail /></ProtectedRoute>}
+          />
         </Routes>
       </main>
     </div>

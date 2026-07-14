@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { MOCK_CATEGORIES } from "@/lib/mock-data";
-import { GasUploadError, uploadViaGas } from "@/lib/gas-upload";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
+import { useCategories, useInstansi, useCreateVersion, useCreateAttachment } from "@/lib/api";
+import { uploadViaGas } from "@/lib/gas-upload";
 
 interface PendingFile {
   file: File;
@@ -16,9 +18,16 @@ interface PendingFile {
 
 export default function SubmissionForm() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { data: categories } = useCategories();
+  const { data: instansi } = useInstansi();
+  const createVersion = useCreateVersion();
+  const createAttachment = useCreateAttachment();
+
   const [judul, setJudul] = React.useState("");
   const [deskripsi, setDeskripsi] = React.useState("");
   const [kategoriId, setKategoriId] = React.useState("");
+  const [instansiId, setInstansiId] = React.useState("");
   const [draf, setDraf] = React.useState<PendingFile | null>(null);
   const [lampiran, setLampiran] = React.useState<PendingFile[]>([]);
   const [submitting, setSubmitting] = React.useState(false);
@@ -37,34 +46,55 @@ export default function SubmissionForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg(null);
-
-    if (!judul.trim()) {
-      setErrorMsg("Judul SK wajib diisi.");
-      return;
-    }
-    if (!draf) {
-      setErrorMsg("Draf SK wajib diunggah.");
-      return;
-    }
+    if (!judul.trim()) { setErrorMsg("Judul SK wajib diisi."); return; }
+    if (!draf) { setErrorMsg("Draf SK wajib diunggah."); return; }
+    if (!instansiId) { setErrorMsg("Instansi wajib dipilih."); return; }
+    if (!kategoriId) { setErrorMsg("Kategori wajib dipilih."); return; }
+    if (!user) { setErrorMsg("Sesi login tidak ditemukan."); return; }
 
     setSubmitting(true);
     try {
-      // nomor_tiket belum ada di sini (baru terisi oleh trigger DB setelah INSERT),
-      // jadi folder Drive sementara pakai judul+timestamp; di implementasi nyata
-      // urutannya: INSERT sk_submissions dulu -> dapat nomor_tiket -> baru upload ke folder itu.
-      const folderPath = `pending/${Date.now()}`;
-      await uploadViaGas(draf.file, folderPath);
+      const { data: submission, error } = await supabase
+        .from("sk_submissions")
+        .insert({ judul_sk: judul.trim(), deskripsi: deskripsi.trim() || null, kategori_id: kategoriId, pemohon_id: user.id, instansi_id: instansiId })
+        .select()
+        .single();
+
+      if (error || !submission) throw error;
+
+      const folderPath = `${instansiId}/${submission.nomor_tiket}`;
+
+      try {
+        const gasResult = await uploadViaGas(draf.file, folderPath);
+        await createVersion.mutateAsync({
+          submission_id: submission.id,
+          drive_file_id: gasResult.drive_file_id,
+          catatan_perubahan: "Draf awal diajukan",
+          diunggah_oleh: user.id,
+        });
+      } catch {
+        setErrorMsg("Pengajuan tersimpan, tapi upload draf ke Drive gagal. Coba upload ulang nanti.");
+      }
+
       for (const item of lampiran) {
-        await uploadViaGas(item.file, folderPath);
+        try {
+          const r = await uploadViaGas(item.file, `${folderPath}/lampiran`);
+          await createAttachment.mutateAsync({
+            submission_id: submission.id,
+            nama_file: r.nama_file,
+            drive_file_id: r.drive_file_id,
+            tipe_file: r.tipe_file,
+            ukuran_bytes: r.ukuran_bytes,
+            diunggah_oleh: user.id,
+          });
+        } catch {
+          // gagal upload satu lampiran tidak menggagalkan seluruhnya
+        }
       }
-      // TODO: setelah GAS sukses, INSERT ke sk_submissions + sk_versions + sk_attachments via Supabase
+
       navigate("/");
-    } catch (err) {
-      if (err instanceof GasUploadError) {
-        setErrorMsg(err.message);
-      } else {
-        setErrorMsg("Terjadi kesalahan saat mengunggah berkas.");
-      }
+    } catch (err: any) {
+      setErrorMsg(err?.message ?? "Terjadi kesalahan saat menyimpan pengajuan.");
     } finally {
       setSubmitting(false);
     }
@@ -79,114 +109,77 @@ export default function SubmissionForm() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Informasi SK</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Informasi SK</CardTitle></CardHeader>
           <CardContent className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium">Instansi</label>
+              <Select value={instansiId} onChange={(e) => setInstansiId(e.target.value)} required>
+                <option value="">Pilih instansi</option>
+                {(instansi ?? []).map((i) => (
+                  <option key={i.id} value={i.id}>{i.nama_instansi}</option>
+                ))}
+              </Select>
+            </div>
             <div>
               <label className="mb-1 block text-sm font-medium">Kategori</label>
               <Select value={kategoriId} onChange={(e) => setKategoriId(e.target.value)} required>
                 <option value="">Pilih kategori</option>
-                {MOCK_CATEGORIES.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nama_kategori}
-                  </option>
+                {(categories ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>{c.nama_kategori}</option>
                 ))}
               </Select>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">Judul SK</label>
-              <Input
-                value={judul}
-                onChange={(e) => setJudul(e.target.value)}
-                placeholder="Contoh: SK Tim Percepatan Penurunan Stunting"
-                required
-              />
+              <Input value={judul} onChange={(e) => setJudul(e.target.value)} placeholder="Contoh: SK Tim Percepatan Penurunan Stunting" required />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">Deskripsi (opsional)</label>
-              <Textarea
-                value={deskripsi}
-                onChange={(e) => setDeskripsi(e.target.value)}
-                placeholder="Ringkasan singkat maksud dan tujuan SK ini"
-              />
+              <Textarea value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} placeholder="Ringkasan singkat maksud dan tujuan SK ini" />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Draf SK</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Draf SK</CardTitle></CardHeader>
           <CardContent>
             {draf ? (
               <div className="flex items-center justify-between rounded-md border border-border bg-muted px-3 py-2 text-sm">
-                <span className="flex items-center gap-2">
-                  <FileText size={16} />
-                  {draf.file.name}
-                </span>
-                <button type="button" onClick={() => setDraf(null)} aria-label="Hapus draf">
-                  <X size={16} />
-                </button>
+                <span className="flex items-center gap-2"><FileText size={16} />{draf.file.name}</span>
+                <button type="button" onClick={() => setDraf(null)} aria-label="Hapus draf"><X size={16} /></button>
               </div>
             ) : (
               <label className="flex cursor-pointer flex-col items-center gap-2 rounded-md border border-dashed border-border py-8 text-center hover:bg-muted">
                 <UploadCloud size={22} className="text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  Klik untuk unggah draf (.docx, .pdf) — maks 20 MB
-                </span>
-                <input
-                  type="file"
-                  accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  onChange={onPickDraf}
-                  className="hidden"
-                />
+                <span className="text-sm text-muted-foreground">Klik untuk unggah draf (.docx, .pdf) — maks 20 MB</span>
+                <input type="file" accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={onPickDraf} className="hidden" />
               </label>
             )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Lampiran Pendukung (opsional)</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Lampiran Pendukung (opsional)</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {lampiran.map((item, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between rounded-md border border-border bg-muted px-3 py-2 text-sm"
-              >
-                <span className="flex items-center gap-2">
-                  <FileText size={16} />
-                  {item.file.name}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setLampiran((prev) => prev.filter((_, i) => i !== idx))}
-                  aria-label="Hapus lampiran"
-                >
-                  <X size={16} />
-                </button>
+              <div key={idx} className="flex items-center justify-between rounded-md border border-border bg-muted px-3 py-2 text-sm">
+                <span className="flex items-center gap-2"><FileText size={16} />{item.file.name}</span>
+                <button type="button" onClick={() => setLampiran((prev) => prev.filter((_, i) => i !== idx))} aria-label="Hapus lampiran"><X size={16} /></button>
               </div>
             ))}
             <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-border py-4 text-sm text-muted-foreground hover:bg-muted">
-              <UploadCloud size={16} />
-              Tambah lampiran
+              <UploadCloud size={16} /> Tambah lampiran
               <input type="file" multiple onChange={onPickLampiran} className="hidden" />
             </label>
           </CardContent>
         </Card>
 
         {errorMsg && (
-          <p className="rounded-md border border-warning/30 bg-amber-50 px-3 py-2 text-sm text-warning">
-            {errorMsg}
-          </p>
+          <p className="rounded-md border border-warning/30 bg-amber-50 px-3 py-2 text-sm text-warning">{errorMsg}</p>
         )}
 
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => navigate("/")}>
-            Batal
-          </Button>
+          <Button type="button" variant="outline" onClick={() => navigate("/")}>Batal</Button>
           <Button type="submit" disabled={submitting}>
             {submitting && <Loader2 size={16} className="animate-spin" />}
             Simpan Pengajuan
