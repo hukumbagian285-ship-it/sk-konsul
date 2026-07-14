@@ -7,7 +7,7 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
-import { useCategories, useCreateVersion, useCreateAttachment } from "@/lib/api";
+import { useCategories, useInstansi, useCreateVersion, useCreateAttachment } from "@/lib/api";
 import { uploadViaGas } from "@/lib/gas-upload";
 
 interface PendingFile {
@@ -20,13 +20,14 @@ export default function SubmissionForm() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: categories } = useCategories();
+  const { data: instansiList } = useInstansi();
   const createVersion = useCreateVersion();
   const createAttachment = useCreateAttachment();
 
   const [judul, setJudul] = React.useState("");
   const [deskripsi, setDeskripsi] = React.useState("");
   const [kategoriId, setKategoriId] = React.useState("");
-  const [instansiId] = React.useState(user?.instansi_id ?? "");
+  const [instansiId, setInstansiId] = React.useState(user?.instansi_id ?? "");
   const [draf, setDraf] = React.useState<PendingFile | null>(null);
   const [lampiran, setLampiran] = React.useState<PendingFile[]>([]);
   const [submitting, setSubmitting] = React.useState(false);
@@ -47,7 +48,7 @@ export default function SubmissionForm() {
     setErrorMsg(null);
     if (!judul.trim()) { setErrorMsg("Judul SK wajib diisi."); return; }
     if (!draf) { setErrorMsg("Draf SK wajib diunggah."); return; }
-    if (!instansiId) { setErrorMsg("Akun Anda belum memiliki instansi. Hubungi super admin."); return; }
+    if (!instansiId && user?.role !== "super_admin") { setErrorMsg("Akun Anda belum memiliki instansi. Hubungi super admin."); return; }
     if (!kategoriId) { setErrorMsg("Kategori wajib dipilih."); return; }
     if (!user) { setErrorMsg("Sesi login tidak ditemukan."); return; }
 
@@ -55,7 +56,7 @@ export default function SubmissionForm() {
     try {
       const { data: submission, error } = await supabase
         .from("sk_submissions")
-        .insert({ judul_sk: judul.trim(), deskripsi: deskripsi.trim() || null, kategori_id: kategoriId, pemohon_id: user.id, instansi_id: instansiId })
+        .insert({ judul_sk: judul.trim(), deskripsi: deskripsi.trim() || null, kategori_id: kategoriId, pemohon_id: user.id, instansi_id: instansiId || null })
         .select()
         .single();
 
@@ -87,6 +88,7 @@ export default function SubmissionForm() {
             diunggah_oleh: user.id,
           });
         } catch {
+          // gagal upload satu lampiran tidak menggagalkan seluruhnya
         }
       }
 
@@ -109,6 +111,17 @@ export default function SubmissionForm() {
         <Card>
           <CardHeader><CardTitle>Informasi SK</CardTitle></CardHeader>
           <CardContent className="space-y-4">
+            {user?.role === "super_admin" && (
+              <div>
+                <label className="mb-1 block text-sm font-medium">Instansi</label>
+                <Select value={instansiId} onChange={(e) => setInstansiId(e.target.value)}>
+                  <option value="">Pilih instansi</option>
+                  {(instansiList ?? []).map((i) => (
+                    <option key={i.id} value={i.id}>{i.nama_instansi}</option>
+                  ))}
+                </Select>
+              </div>
+            )}
             <div>
               <label className="mb-1 block text-sm font-medium">Kategori</label>
               <Select value={kategoriId} onChange={(e) => setKategoriId(e.target.value)} required>
