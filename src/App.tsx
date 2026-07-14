@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
-import DashboardKanban from "@/pages/DashboardKanban";
+import TableDashboard from "@/pages/TableDashboard";
 import SubmissionForm from "@/pages/SubmissionForm";
 import SubmissionDetail from "@/pages/SubmissionDetail";
 import LoginPage from "@/pages/LoginPage";
@@ -9,6 +9,7 @@ import CategoriesPage from "@/pages/admin/CategoriesPage";
 import InstansiPage from "@/pages/admin/InstansiPage";
 import UsersPage from "@/pages/admin/UsersPage";
 import AppLayout from "@/components/AppLayout";
+import TrackingPage from "@/pages/TrackingPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -25,9 +26,10 @@ function AppShell() {
         <ProtectedRoute>
           <AppLayout>
             <Routes>
-              <Route path="/" element={<DashboardKanban />} />
+              <Route path="/" element={<TableDashboard />} />
               <Route path="/submissions/new" element={<SubmissionForm />} />
               <Route path="/submissions/:id" element={<SubmissionDetail />} />
+              <Route path="/tracking" element={<TrackingPage />} />
               <Route path="/admin/kategori" element={<CategoriesPage />} />
               <Route path="/admin/instansi" element={<InstansiPage />} />
               <Route path="/admin/akun" element={<UsersPage />} />
