@@ -1,6 +1,5 @@
-import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
+import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { Scale, FilePlus2, LogOut, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import DashboardKanban from "@/pages/DashboardKanban";
 import SubmissionForm from "@/pages/SubmissionForm";
@@ -8,9 +7,8 @@ import SubmissionDetail from "@/pages/SubmissionDetail";
 import LoginPage from "@/pages/LoginPage";
 
 function Header() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
   const isForm = location.pathname === "/submissions/new";
 
   if (loading) return null;
@@ -47,7 +45,7 @@ function Header() {
                 </p>
               </div>
               <button
-                onClick={() => { supabase.auth.signOut(); navigate("/login"); }}
+                onClick={logout}
                 className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"
                 title="Keluar"
               >

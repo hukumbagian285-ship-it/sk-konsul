@@ -6,6 +6,7 @@ interface AuthUser {
   id: string;
   nama_lengkap: string;
   role: Role | null;
+  nip: string;
   instansi_id: string | null;
 }
 
@@ -13,58 +14,59 @@ interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   profile: Profile | null;
+  login: (nip: string, password: string) => Promise<string | null>;
+  logout: () => void;
 }
 
 const AuthContext = React.createContext<AuthContextValue | null>(null);
+const STORAGE_KEY = "sk_user";
+
+function loadSession(): AuthUser | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveSession(user: AuthUser) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+}
+
+function clearSession() {
+  localStorage.removeItem(STORAGE_KEY);
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<AuthUser | null>(null);
+  const [user, setUser] = React.useState<AuthUser | null>(loadSession);
   const [profile, setProfile] = React.useState<Profile | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const loading = false;
 
-  React.useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        loadProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
+  async function login(nip: string, password: string): Promise<string | null> {
+    const { data, error } = await supabase.rpc("verify_login", {
+      p_nip: nip,
+      p_password: password,
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        loadProfile(session.user.id);
-      } else {
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
-      }
-    });
+    if (error) return "Terjadi kesalahan sistem.";
+    if (!data || data.length === 0) return "NIP atau password salah.";
 
-    return () => subscription.unsubscribe();
-  }, []);
+    const row = data[0] as AuthUser;
+    setUser(row);
+    setProfile(row as unknown as Profile);
+    saveSession(row);
+    return null;
+  }
 
-  async function loadProfile(userId: string) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-
-    if (data) {
-      setProfile(data as Profile);
-      setUser({
-        id: data.id,
-        nama_lengkap: data.nama_lengkap,
-        role: data.role,
-        instansi_id: data.instansi_id,
-      });
-    }
-    setLoading(false);
+  function logout() {
+    setUser(null);
+    setProfile(null);
+    clearSession();
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, profile }}>
+    <AuthContext.Provider value={{ user, loading, profile, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

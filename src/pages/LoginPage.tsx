@@ -1,34 +1,29 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { Scale, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = React.useState("");
+  const { user, login } = useAuth();
+  const [nip, setNip] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate("/", { replace: true });
-    });
-  }, [navigate]);
+    if (user) navigate("/", { replace: true });
+  }, [user, navigate]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const err = await login(nip.trim(), password);
     setLoading(false);
-    if (error) {
-      setError(error.message === "Invalid login credentials"
-        ? "Email atau password salah."
-        : error.message);
-    }
+    if (err) setError(err);
   }
 
   return (
@@ -48,12 +43,12 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">Email</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">NIP</label>
             <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@instansi.go.id"
+              type="text"
+              value={nip}
+              onChange={(e) => setNip(e.target.value)}
+              placeholder="199001012025011001"
               required
               autoFocus
             />
@@ -64,7 +59,7 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="password"
               required
             />
           </div>
