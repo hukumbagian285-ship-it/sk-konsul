@@ -87,7 +87,6 @@ export default function SubmissionForm() {
             diunggah_oleh: user.id,
           });
         } catch {
-          // gagal upload satu lampiran tidak menggagalkan seluruhnya
         }
       }
 
@@ -110,14 +109,6 @@ export default function SubmissionForm() {
         <Card>
           <CardHeader><CardTitle>Informasi SK</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            {instansiId && (
-              <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">Instansi</label>
-                <p className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-                  Terisi otomatis dari profil Anda
-                </p>
-              </div>
-            )}
             <div>
               <label className="mb-1 block text-sm font-medium">Kategori</label>
               <Select value={kategoriId} onChange={(e) => setKategoriId(e.target.value)} required>
