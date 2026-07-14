@@ -7,7 +7,7 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
-import { useCategories, useInstansi, useCreateVersion, useCreateAttachment } from "@/lib/api";
+import { useCategories, useCreateVersion, useCreateAttachment } from "@/lib/api";
 import { uploadViaGas } from "@/lib/gas-upload";
 
 interface PendingFile {
@@ -20,14 +20,13 @@ export default function SubmissionForm() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: categories } = useCategories();
-  const { data: instansi } = useInstansi();
   const createVersion = useCreateVersion();
   const createAttachment = useCreateAttachment();
 
   const [judul, setJudul] = React.useState("");
   const [deskripsi, setDeskripsi] = React.useState("");
   const [kategoriId, setKategoriId] = React.useState("");
-  const [instansiId, setInstansiId] = React.useState("");
+  const [instansiId] = React.useState(user?.instansi_id ?? "");
   const [draf, setDraf] = React.useState<PendingFile | null>(null);
   const [lampiran, setLampiran] = React.useState<PendingFile[]>([]);
   const [submitting, setSubmitting] = React.useState(false);
@@ -48,7 +47,7 @@ export default function SubmissionForm() {
     setErrorMsg(null);
     if (!judul.trim()) { setErrorMsg("Judul SK wajib diisi."); return; }
     if (!draf) { setErrorMsg("Draf SK wajib diunggah."); return; }
-    if (!instansiId) { setErrorMsg("Instansi wajib dipilih."); return; }
+    if (!instansiId) { setErrorMsg("Akun Anda belum memiliki instansi. Hubungi super admin."); return; }
     if (!kategoriId) { setErrorMsg("Kategori wajib dipilih."); return; }
     if (!user) { setErrorMsg("Sesi login tidak ditemukan."); return; }
 
@@ -111,15 +110,14 @@ export default function SubmissionForm() {
         <Card>
           <CardHeader><CardTitle>Informasi SK</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium">Instansi</label>
-              <Select value={instansiId} onChange={(e) => setInstansiId(e.target.value)} required>
-                <option value="">Pilih instansi</option>
-                {(instansi ?? []).map((i) => (
-                  <option key={i.id} value={i.id}>{i.nama_instansi}</option>
-                ))}
-              </Select>
-            </div>
+            {instansiId && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">Instansi</label>
+                <p className="rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                  Terisi otomatis dari profil Anda
+                </p>
+              </div>
+            )}
             <div>
               <label className="mb-1 block text-sm font-medium">Kategori</label>
               <Select value={kategoriId} onChange={(e) => setKategoriId(e.target.value)} required>
