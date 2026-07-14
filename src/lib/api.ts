@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import type { Instansi, SkCategory, SkSubmission, SkVersion, SkComment, SkStatusHistory, StatusSK } from "@/lib/types";
+import type { Instansi, SkCategory, SkSubmission, SkVersion, SkComment, SkStatusHistory, StatusSK, Role } from "@/lib/types";
 
 export function useInstansi() {
   return useQuery({
@@ -152,6 +152,144 @@ export function useUpdateStatus() {
       qc.invalidateQueries({ queryKey: ["submissions"] });
       qc.invalidateQueries({ queryKey: ["submission", data.id] });
       qc.invalidateQueries({ queryKey: ["status_history", data.id] });
+    },
+  });
+}
+
+export function useCreateCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { nama_kategori: string; deskripsi: string | null }) => {
+      const { data, error } = await supabase.from("sk_categories").insert(payload).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
+  });
+}
+
+export function useUpdateCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: { id: string; nama_kategori?: string; deskripsi?: string | null; is_active?: boolean }) => {
+      const { data, error } = await supabase.from("sk_categories").update(payload).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
+  });
+}
+
+export function useDeleteCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("sk_categories").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
+  });
+}
+
+export function useCreateInstansi() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { kode_instansi: string; nama_instansi: string }) => {
+      const { data, error } = await supabase.from("instansi").insert(payload).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["instansi"] }),
+  });
+}
+
+export function useUpdateInstansi() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: { id: string; kode_instansi?: string; nama_instansi?: string }) => {
+      const { data, error } = await supabase.from("instansi").update(payload).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["instansi"] }),
+  });
+}
+
+export function useDeleteInstansi() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("instansi").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["instansi"] }),
+  });
+}
+
+export interface ProfileWithInstansi {
+  id: string;
+  nip: string;
+  nama_lengkap: string;
+  role: Role;
+  instansi_id: string | null;
+  instansi_nama?: { nama_instansi: string } | null;
+  created_at: string;
+}
+
+export function useAllUsers() {
+  return useQuery({
+    queryKey: ["users"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*, instansi_nama:instansi!instansi_id(nama_instansi)")
+        .order("nama_lengkap");
+      return (data ?? []) as ProfileWithInstansi[];
+    },
+  });
+}
+
+export function useUpdateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: { id: string; nama_lengkap?: string; role?: Role; instansi_id?: string | null }) => {
+      const { data, error } = await supabase.from("profiles").update(payload).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
+  });
+}
+
+export function useDeleteUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("profiles").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
+  });
+}
+
+export function useCreateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { nip: string; nama_lengkap: string; role: Role; instansi_id: string | null; password: string }) => {
+      const { data, error } = await supabase.rpc("create_user", payload);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
+  });
+}
+
+export function useAllCategories() {
+  return useQuery({
+    queryKey: ["all-categories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("sk_categories").select("*").order("nama_kategori");
+      return (data ?? []) as SkCategory[];
     },
   });
 }
