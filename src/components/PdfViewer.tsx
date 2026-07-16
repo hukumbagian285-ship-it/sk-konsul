@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Document, pdfjs } from "react-pdf";
 import { ChevronLeft, ChevronRight, Loader2, ZoomIn, ZoomOut, PenBox } from "lucide-react";
 import type { SkComment } from "@/lib/types";
@@ -33,6 +33,7 @@ export default function PdfViewer({
   const [scale, setScale] = useState(1);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollPositions = useRef<Record<number, number>>({});
 
   function onLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
@@ -41,13 +42,13 @@ export default function PdfViewer({
 
   function goToPage(page: number) {
     const p = Math.max(1, Math.min(page, numPages));
+    scrollPositions.current[pageNumber] = scrollRef.current?.scrollTop ?? 0;
     setPageNumber(p);
     onPageChange?.(p);
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo(0, scrollPositions.current[p] ?? 0);
+    });
   }
-
-  useEffect(() => {
-    scrollRef.current?.scrollTo(0, 0);
-  }, [pageNumber]);
 
   return (
     <div className="flex flex-col items-center">
