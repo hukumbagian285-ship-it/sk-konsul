@@ -29,10 +29,10 @@ export default function TemplateDetailPage() {
         </details>
       )}
 
-      <div className="flex-1 min-h-0 rounded-lg border bg-card overflow-hidden">
+      <div className="relative flex-1 min-h-0 rounded-lg border bg-card overflow-hidden">
         <iframe
           src={`https://docs.google.com/document/d/${template.drive_file_id}/preview`}
-          className="h-full w-full"
+          className="absolute inset-0 h-full w-full"
           title="Pratinjau dokumen"
         />
       </div>
