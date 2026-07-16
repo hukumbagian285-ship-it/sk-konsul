@@ -11,7 +11,7 @@ export default function PdfViewer({
   driveFileId: string;
   onPageChange?: (page: number) => void;
 }) {
-  const url = `https://drive.google.com/uc?export=download&id=${driveFileId}`;
+  const url = `/api/gpdf?id=${driveFileId}`;
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1);
