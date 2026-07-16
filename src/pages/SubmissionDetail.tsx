@@ -107,10 +107,6 @@ export default function SubmissionDetail() {
         <Badge className={cn("border px-3 py-1 text-sm", STATUS_WARNA[sub.status])}>{sub.status}</Badge>
       </div>
 
-      {sub.deskripsi && (
-        <p className="mb-6 rounded-md border border-border bg-muted p-3 text-sm text-foreground">{sub.deskripsi}</p>
-      )}
-
       {transisiTersedia.length > 0 && (
         <Card className="mb-6 border-primary/30">
           <CardContent className="flex flex-wrap items-center gap-2 p-4">

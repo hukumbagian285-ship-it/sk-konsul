@@ -10,6 +10,7 @@ interface AnnotatedPageProps {
   scale: number;
   onSelectPosition: (pos: { page: number; x: number; y: number; w: number; h: number }) => void;
   onCommentClick: (commentId: string) => void;
+  onPageRendered?: (page: number) => void;
 }
 
 const WARNA_MAP: Record<string, string> = {
@@ -26,6 +27,7 @@ export default function AnnotatedPage({
   scale,
   onSelectPosition,
   onCommentClick,
+  onPageRendered,
 }: AnnotatedPageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
@@ -83,7 +85,7 @@ export default function AnnotatedPage({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
     >
-      <Page pageNumber={pageNumber} scale={scale} renderTextLayer={false} renderAnnotationLayer={false} />
+      <Page pageNumber={pageNumber} scale={scale} renderTextLayer={false} renderAnnotationLayer={false} onRenderSuccess={() => onPageRendered?.(pageNumber)} />
 
       {savedHighlights.map((c) => (
         <div

@@ -10,6 +10,9 @@ import InstansiPage from "@/pages/admin/InstansiPage";
 import UsersPage from "@/pages/admin/UsersPage";
 import AppLayout from "@/components/AppLayout";
 import TrackingPage from "@/pages/TrackingPage";
+import TemplateListPage from "@/pages/TemplateListPage";
+import TemplateDetailPage from "@/pages/TemplateDetailPage";
+import AdminTemplatePage from "@/pages/admin/AdminTemplatePage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -30,7 +33,10 @@ function AppShell() {
               <Route path="/submissions/new" element={<SubmissionForm />} />
               <Route path="/submissions/:id" element={<SubmissionDetail />} />
               <Route path="/tracking" element={<TrackingPage />} />
+              <Route path="/templates" element={<TemplateListPage />} />
+              <Route path="/templates/:id" element={<TemplateDetailPage />} />
               <Route path="/admin/kategori" element={<CategoriesPage />} />
+              <Route path="/admin/template" element={<AdminTemplatePage />} />
               <Route path="/admin/instansi" element={<InstansiPage />} />
               <Route path="/admin/akun" element={<UsersPage />} />
             </Routes>

@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   FilePlus,
   FileSearch,
+  FileText,
   FolderKanban,
   Building2,
   Users,
@@ -48,6 +49,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <NavLink to="/" icon={LayoutDashboard} label="Beranda" active={location.pathname === "/"} />
           <NavLink to="/submissions/new" icon={FilePlus} label="Ajukan SK" active={location.pathname === "/submissions/new"} />
           <NavLink to="/tracking" icon={FileSearch} label="Tracking" active={location.pathname === "/tracking"} />
+          <NavLink to="/templates" icon={FileText} label="Template" active={location.pathname === "/templates"} />
           {user?.role === "super_admin" && (
             <>
               <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -86,6 +88,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Link to="/tracking" className={`flex flex-col items-center gap-0.5 ${location.pathname === "/tracking" ? "text-primary" : "text-muted-foreground"}`}>
           <FileSearch size={20} />
           <span className="text-[10px]">Tracking</span>
+        </Link>
+        <Link to="/templates" className={`flex flex-col items-center gap-0.5 ${location.pathname === "/templates" ? "text-primary" : "text-muted-foreground"}`}>
+          <FileText size={20} />
+          <span className="text-[10px]">Template</span>
         </Link>
         {user?.role === "super_admin" && (
           <Link to="/admin/kategori" className={`flex flex-col items-center gap-0.5 ${location.pathname.startsWith("/admin") ? "text-primary" : "text-muted-foreground"}`}>

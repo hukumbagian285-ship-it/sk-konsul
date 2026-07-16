@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import type { Instansi, SkCategory, SkSubmission, SkVersion, SkComment, SkStatusHistory, StatusSK, Role } from "@/lib/types";
+import type { Instansi, SkCategory, SkSubmission, SkVersion, SkComment, SkStatusHistory, SkTemplate, StatusSK, Role } from "@/lib/types";
 
 export function useInstansi() {
   return useQuery({
@@ -303,5 +303,61 @@ export function useAllCategories() {
       const { data } = await supabase.from("sk_categories").select("*").order("nama_kategori");
       return (data ?? []) as SkCategory[];
     },
+  });
+}
+
+export function useTemplates() {
+  return useQuery({
+    queryKey: ["templates"],
+    queryFn: async () => {
+      const { data } = await supabase.from("sk_templates").select("*").order("nama_template");
+      return (data ?? []) as SkTemplate[];
+    },
+  });
+}
+
+export function useTemplate(id: string | undefined) {
+  return useQuery({
+    queryKey: ["template", id],
+    queryFn: async () => {
+      const { data } = await supabase.from("sk_templates").select("*").eq("id", id).single();
+      return data as SkTemplate | null;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useCreateTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { nama_template: string; deskripsi: string | null; drive_file_id: string; aturan_penulisan: string | null }) => {
+      const { data, error } = await supabase.from("sk_templates").insert(payload).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["templates"] }),
+  });
+}
+
+export function useUpdateTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: { id: string; nama_template?: string; deskripsi?: string | null; drive_file_id?: string; aturan_penulisan?: string | null }) => {
+      const { data, error } = await supabase.from("sk_templates").update(payload).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["templates"] }),
+  });
+}
+
+export function useDeleteTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("sk_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["templates"] }),
   });
 }

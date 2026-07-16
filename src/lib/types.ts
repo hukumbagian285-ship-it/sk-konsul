@@ -121,6 +121,16 @@ export interface SkComment {
   created_at: string;
 }
 
+export interface SkTemplate {
+  id: string;
+  nama_template: string;
+  deskripsi: string | null;
+  drive_file_id: string;
+  aturan_penulisan: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface SkStatusHistory {
   id: string;
   submission_id: string;

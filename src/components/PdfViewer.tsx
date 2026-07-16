@@ -40,14 +40,21 @@ export default function PdfViewer({
     setLoading(false);
   }
 
+  const pendingScroll = useRef<number | null>(null);
+
   function goToPage(page: number) {
     const p = Math.max(1, Math.min(page, numPages));
     scrollPositions.current[pageNumber] = scrollRef.current?.scrollTop ?? 0;
     setPageNumber(p);
     onPageChange?.(p);
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo(0, scrollPositions.current[p] ?? 0);
-    });
+    pendingScroll.current = p;
+  }
+
+  function handlePageRendered(page: number) {
+    if (pendingScroll.current === page) {
+      pendingScroll.current = null;
+      scrollRef.current?.scrollTo(0, scrollPositions.current[page] ?? 0);
+    }
   }
 
   return (
@@ -70,7 +77,7 @@ export default function PdfViewer({
         </button>
       </div>
 
-      <div ref={scrollRef} className="relative max-h-[70vh] overflow-auto rounded-md border border-border">
+      <div ref={scrollRef} className="relative h-[70vh] w-full overflow-auto rounded-md border border-border">
         {loading && (
           <div className="flex h-64 items-center justify-center">
             <Loader2 size={24} className="animate-spin text-muted-foreground" />
@@ -85,6 +92,7 @@ export default function PdfViewer({
             scale={scale}
             onSelectPosition={onSelectPosition}
             onCommentClick={onCommentClick}
+            onPageRendered={handlePageRendered}
           />
         </Document>
       </div>
