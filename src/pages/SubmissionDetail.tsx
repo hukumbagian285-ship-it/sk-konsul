@@ -35,9 +35,9 @@ export default function SubmissionDetail() {
 
   const createComment = useCreateComment();
 
-  if (isLoading) return <div className="flex justify-center py-20"><Loader2 size={24} className="animate-spin text-muted-foreground" /></div>;
+  if (isLoading) return <div className="flex flex-1 items-center justify-center"><Loader2 size={24} className="animate-spin text-muted-foreground" /></div>;
   if (!submission || !user) {
-    return <div className="text-center text-muted-foreground">Pengajuan tidak ditemukan. <Link to="/" className="text-primary underline">Kembali ke papan</Link></div>;
+    return <div className="flex flex-1 items-center justify-center text-center text-muted-foreground">Pengajuan tidak ditemukan. <Link to="/" className="text-primary underline">Kembali ke papan</Link></div>;
   }
   const sub = submission!;
   const usr = user!;
@@ -88,12 +88,12 @@ export default function SubmissionDetail() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col min-h-0">
       <Link to="/" className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft size={14} /> Kembali ke papan
       </Link>
 
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3 flex-shrink-0">
         <div>
           <p className="ticket-tag mb-1">{sub.nomor_tiket}</p>
           <h1 className="font-display text-2xl font-semibold text-foreground">{sub.judul_sk}</h1>
@@ -108,7 +108,7 @@ export default function SubmissionDetail() {
       </div>
 
       {transisiTersedia.length > 0 && (
-        <Card className="mb-6 border-primary/30">
+        <Card className="mb-4 border-primary/30 flex-shrink-0">
           <CardContent className="flex flex-wrap items-center gap-2 p-4">
             <span className="text-sm font-medium text-foreground">Aksi:</span>
             {transisiTersedia.map((next) => (
@@ -126,47 +126,47 @@ export default function SubmissionDetail() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><FileText size={16} /> Dokumen</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {latestVersion ? (
-                <PdfViewer
-                  driveFileId={latestVersion.drive_file_id}
-                  comments={comments}
-                  annotationMode={annotationMode}
-                  onToggleAnnotation={() => setAnnotationMode((a) => !a)}
-                  selectedPosition={selectedPosition}
-                  onSelectPosition={setSelectedPosition}
-                  onCommentClick={(commentId) => {
-                    const c = comments.find((x) => x.id === commentId);
-                    if (c?.halaman) setCurrentPage(c.halaman);
-                    setHighlightedCommentId(commentId);
-                  }}
-                  onPageChange={setCurrentPage}
-                />
-              ) : (
+      <div className="flex flex-1 gap-6 min-h-0 pb-6">
+        <Card className="flex min-h-0 flex-1 flex-col">
+          <CardHeader className="flex-shrink-0">
+            <CardTitle className="flex items-center gap-2"><FileText size={16} /> Dokumen</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-1 min-h-0 flex-col p-0">
+            {latestVersion ? (
+              <PdfViewer
+                driveFileId={latestVersion.drive_file_id}
+                comments={comments}
+                annotationMode={annotationMode}
+                onToggleAnnotation={() => setAnnotationMode((a) => !a)}
+                selectedPosition={selectedPosition}
+                onSelectPosition={setSelectedPosition}
+                onCommentClick={(commentId) => {
+                  const c = comments.find((x) => x.id === commentId);
+                  if (c?.halaman) setCurrentPage(c.halaman);
+                  setHighlightedCommentId(commentId);
+                }}
+                onPageChange={setCurrentPage}
+              />
+            ) : (
+              <div className="flex flex-1 items-center justify-center">
                 <p className="text-sm text-muted-foreground">Belum ada dokumen.</p>
-              )}
-              {selectedPosition?.page === currentPage && (
-                <CommentPopover
-                  style={{
-                    top: selectedPosition.y + 60,
-                    left: selectedPosition.x + 20,
-                  }}
-                  onSubmit={handleSubmitAnnotation}
-                  onCancel={() => setSelectedPosition(null)}
-                  pending={createComment.isPending}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </div>
+            )}
+            {selectedPosition?.page === currentPage && (
+              <CommentPopover
+                style={{
+                  top: selectedPosition.y + 60,
+                  left: selectedPosition.x + 20,
+                }}
+                onSubmit={handleSubmitAnnotation}
+                onCancel={() => setSelectedPosition(null)}
+                pending={createComment.isPending}
+              />
+            )}
+          </CardContent>
+        </Card>
 
-        <div className="space-y-6">
+        <div className="hidden w-[380px] flex-shrink-0 space-y-6 overflow-y-auto lg:block">
           {bolehUploadVersi && (
             <Card>
               <CardContent className="p-4">

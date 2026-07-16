@@ -58,8 +58,8 @@ export default function PdfViewer({
   }
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="mb-2 flex items-center gap-2">
+    <div className="flex flex-1 flex-col min-h-0">
+      <div className="mb-2 flex flex-shrink-0 items-center gap-2 self-center">
         <button onClick={() => setScale((s) => Math.max(0.5, s - 0.25))} className="rounded p-1 hover:bg-muted" title="Perkecil">
           <ZoomOut size={16} />
         </button>
@@ -77,7 +77,7 @@ export default function PdfViewer({
         </button>
       </div>
 
-      <div ref={scrollRef} className="relative h-[70vh] w-full overflow-auto rounded-md border border-border">
+      <div ref={scrollRef} className="relative flex-1 min-h-0 w-full overflow-auto rounded-md border border-border">
         {loading && (
           <div className="flex h-64 items-center justify-center">
             <Loader2 size={24} className="animate-spin text-muted-foreground" />
@@ -98,7 +98,7 @@ export default function PdfViewer({
       </div>
 
       {numPages > 0 && (
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-2 flex flex-shrink-0 items-center gap-2 self-center">
           <button onClick={() => goToPage(pageNumber - 1)} disabled={pageNumber <= 1} className="rounded p-1 hover:bg-muted disabled:opacity-30">
             <ChevronLeft size={16} />
           </button>
