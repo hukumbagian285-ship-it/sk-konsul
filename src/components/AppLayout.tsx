@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Link, useLocation } from "react-router-dom";
+import ToastContainer from "./Toast";
 import {
   LayoutDashboard,
   FilePlus,
@@ -163,6 +164,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Safe bottom spacing on mobile */}
       <div className="safe-bottom md:hidden" />
+      <ToastContainer />
     </div>
   );
 }

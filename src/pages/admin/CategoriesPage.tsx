@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { useAllCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/lib/api";
+import { toast } from "@/components/Toast";
 
 export default function CategoriesPage() {
   const { data: categories, isLoading } = useAllCategories();
@@ -20,20 +21,34 @@ export default function CategoriesPage() {
 
   async function handleAdd() {
     if (!nama.trim()) return;
-    await create.mutateAsync({ nama_kategori: nama.trim(), deskripsi: deskripsi.trim() || null });
-    setNama("");
-    setDeskripsi("");
-    setAdding(false);
+    try {
+      await create.mutateAsync({ nama_kategori: nama.trim(), deskripsi: deskripsi.trim() || null });
+      toast("Kategori berhasil ditambahkan", "success");
+      setNama(""); setDeskripsi(""); setAdding(false);
+    } catch { toast("Gagal menambahkan kategori", "error"); }
   }
 
   async function handleEdit(id: string) {
     if (!editNama.trim()) return;
-    await update.mutateAsync({ id, nama_kategori: editNama.trim(), deskripsi: editDeskripsi.trim() || null });
-    setEditingId(null);
+    try {
+      await update.mutateAsync({ id, nama_kategori: editNama.trim(), deskripsi: editDeskripsi.trim() || null });
+      toast("Kategori berhasil diperbarui", "success");
+      setEditingId(null);
+    } catch { toast("Gagal memperbarui kategori", "error"); }
   }
 
   async function handleToggleActive(id: string, current: boolean) {
-    await update.mutateAsync({ id, is_active: !current });
+    try {
+      await update.mutateAsync({ id, is_active: !current });
+      toast(current ? "Kategori dinonaktifkan" : "Kategori diaktifkan", "success");
+    } catch { toast("Gagal mengubah status kategori", "error"); }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await del.mutateAsync(id);
+      toast("Kategori berhasil dihapus", "success");
+    } catch { toast("Gagal menghapus kategori", "error"); }
   }
 
   if (isLoading) return <div className="flex flex-1 items-center justify-center"><Loader2 size={24} className="animate-spin" /></div>;
@@ -97,7 +112,7 @@ export default function CategoriesPage() {
                     className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors" title={cat.is_active ? "Nonaktifkan" : "Aktifkan"}>
                     {cat.is_active ? <XIcon size={14} /> : <Check size={14} />}
                   </button>
-                  <button onClick={() => { if (confirm("Hapus kategori ini?")) del.mutate(cat.id); }}
+                  <button onClick={() => { if (confirm("Hapus kategori ini?")) handleDelete(cat.id); }}
                     className="rounded p-1.5 text-destructive hover:bg-red-50 transition-colors" title="Hapus"><Trash2 size={14} /></button>
                 </div>
               </>
@@ -150,7 +165,7 @@ export default function CategoriesPage() {
                             className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors" title={cat.is_active ? "Nonaktifkan" : "Aktifkan"}>
                             {cat.is_active ? <XIcon size={14} /> : <Check size={14} />}
                           </button>
-                          <button onClick={() => { if (confirm("Hapus kategori ini?")) del.mutate(cat.id); }}
+                          <button onClick={() => { if (confirm("Hapus kategori ini?")) handleDelete(cat.id); }}
                             className="rounded p-1.5 text-destructive hover:bg-red-50 transition-colors" title="Hapus"><Trash2 size={14} /></button>
                         </div>
                       </td>

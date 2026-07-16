@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useAllUsers, useCreateUser, useUpdateUser, useDeleteUser, useInstansi } from "@/lib/api";
+import { toast } from "@/components/Toast";
 import type { Role } from "@/lib/types";
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -33,20 +34,34 @@ export default function UsersPage() {
 
   async function handleAdd() {
     if (!form.nip.trim() || !form.nama.trim() || !form.password.trim()) return;
-    await create.mutateAsync({
-      nip: form.nip.trim(),
-      nama_lengkap: form.nama.trim(),
-      role: form.role,
-      instansi_id: form.instansi_id || null,
-      password: form.password,
-    });
-    resetForm();
+    try {
+      await create.mutateAsync({
+        nip: form.nip.trim(),
+        nama_lengkap: form.nama.trim(),
+        role: form.role,
+        instansi_id: form.instansi_id || null,
+        password: form.password,
+      });
+      toast("Akun berhasil ditambahkan", "success");
+      resetForm();
+    } catch { toast("Gagal menambahkan akun", "error"); }
   }
 
   async function handleEdit(id: string) {
     if (!editForm.nama.trim()) return;
-    await update.mutateAsync({ id, nama_lengkap: editForm.nama.trim(), role: editForm.role, instansi_id: editForm.instansi_id || null });
-    setEditingId(null);
+    try {
+      await update.mutateAsync({ id, nama_lengkap: editForm.nama.trim(), role: editForm.role, instansi_id: editForm.instansi_id || null });
+      toast("Akun berhasil diperbarui", "success");
+      setEditingId(null);
+    } catch { toast("Gagal memperbarui akun", "error"); }
+  }
+
+  async function handleDelete(id: string, label: string) {
+    if (!confirm(`Hapus ${label}?`)) return;
+    try {
+      await del.mutateAsync(id);
+      toast("Akun berhasil dihapus", "success");
+    } catch { toast("Gagal menghapus akun", "error"); }
   }
 
   if (isLoading) return <div className="flex flex-1 items-center justify-center"><Loader2 size={24} className="animate-spin" /></div>;
@@ -128,7 +143,7 @@ export default function UsersPage() {
                   <div className="mt-3 flex gap-1 border-t border-border pt-3">
                     <button onClick={() => { setEditingId(u.id); setEditForm({ nama: u.nama_lengkap, role: u.role, instansi_id: u.instansi_id ?? "" }); }}
                       className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors"><Pencil size={14} /></button>
-                    <button onClick={() => { if (confirm(`Hapus ${u.nama_lengkap}?`)) del.mutate(u.id); }}
+                    <button onClick={() => handleDelete(u.id, u.nama_lengkap)}
                       className="rounded p-1.5 text-destructive hover:bg-red-50 transition-colors"><Trash2 size={14} /></button>
                   </div>
                 </div>
@@ -190,7 +205,7 @@ export default function UsersPage() {
                         <div className="flex gap-1">
                           <button onClick={() => { setEditingId(u.id); setEditForm({ nama: u.nama_lengkap, role: u.role, instansi_id: u.instansi_id ?? "" }); }}
                             className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors"><Pencil size={14} /></button>
-                          <button onClick={() => { if (confirm(`Hapus ${u.nama_lengkap}?`)) del.mutate(u.id); }}
+                          <button onClick={() => handleDelete(u.id, u.nama_lengkap)}
                             className="rounded p-1.5 text-destructive hover:bg-red-50 transition-colors"><Trash2 size={14} /></button>
                         </div>
                       </td>

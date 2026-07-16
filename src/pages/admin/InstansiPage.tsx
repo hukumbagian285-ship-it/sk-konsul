@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useInstansi, useCreateInstansi, useUpdateInstansi, useDeleteInstansi } from "@/lib/api";
+import { toast } from "@/components/Toast";
 
 export default function InstansiPage() {
   const { data: instansi, isLoading } = useInstansi();
@@ -20,16 +21,28 @@ export default function InstansiPage() {
 
   async function handleAdd() {
     if (!kode.trim() || !nama.trim()) return;
-    await create.mutateAsync({ kode_instansi: kode.trim().toUpperCase(), nama_instansi: nama.trim() });
-    setKode("");
-    setNama("");
-    setAdding(false);
+    try {
+      await create.mutateAsync({ kode_instansi: kode.trim().toUpperCase(), nama_instansi: nama.trim() });
+      toast("Instansi berhasil ditambahkan", "success");
+      setKode(""); setNama(""); setAdding(false);
+    } catch { toast("Gagal menambahkan instansi", "error"); }
   }
 
   async function handleEdit(id: string) {
     if (!editKode.trim() || !editNama.trim()) return;
-    await update.mutateAsync({ id, kode_instansi: editKode.trim().toUpperCase(), nama_instansi: editNama.trim() });
-    setEditingId(null);
+    try {
+      await update.mutateAsync({ id, kode_instansi: editKode.trim().toUpperCase(), nama_instansi: editNama.trim() });
+      toast("Instansi berhasil diperbarui", "success");
+      setEditingId(null);
+    } catch { toast("Gagal memperbarui instansi", "error"); }
+  }
+
+  async function handleDelete(id: string, label: string) {
+    if (!confirm(`Hapus ${label}?`)) return;
+    try {
+      await del.mutateAsync(id);
+      toast("Instansi berhasil dihapus", "success");
+    } catch { toast("Gagal menghapus instansi", "error"); }
   }
 
   if (isLoading) return <div className="flex flex-1 items-center justify-center"><Loader2 size={24} className="animate-spin" /></div>;
@@ -85,7 +98,7 @@ export default function InstansiPage() {
                 <div className="flex items-center gap-1">
                   <button onClick={() => { setEditingId(i.id); setEditKode(i.kode_instansi); setEditNama(i.nama_instansi); }}
                     className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Edit"><Pencil size={14} /></button>
-                  <button onClick={() => { if (confirm(`Hapus ${i.nama_instansi}?`)) del.mutate(i.id); }}
+                  <button onClick={() => handleDelete(i.id, i.nama_instansi)}
                     className="rounded p-1.5 text-destructive hover:bg-red-50 transition-colors" title="Hapus"><Trash2 size={14} /></button>
                 </div>
               </>
@@ -127,7 +140,7 @@ export default function InstansiPage() {
                         <div className="flex gap-1">
                           <button onClick={() => { setEditingId(i.id); setEditKode(i.kode_instansi); setEditNama(i.nama_instansi); }}
                             className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Edit"><Pencil size={14} /></button>
-                          <button onClick={() => { if (confirm(`Hapus ${i.nama_instansi}?`)) del.mutate(i.id); }}
+                          <button onClick={() => handleDelete(i.id, i.nama_instansi)}
                             className="rounded p-1.5 text-destructive hover:bg-red-50 transition-colors" title="Hapus"><Trash2 size={14} /></button>
                         </div>
                       </td>

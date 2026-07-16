@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
 import { useTemplates, useCreateTemplate, useUpdateTemplate, useDeleteTemplate } from "@/lib/api";
+import { toast } from "@/components/Toast";
 
 export default function AdminTemplatePage() {
   const { data: templates, isLoading } = useTemplates();
@@ -25,26 +26,40 @@ export default function AdminTemplatePage() {
 
   async function handleAdd() {
     if (!nama.trim() || !driveFileId.trim()) return;
-    await create.mutateAsync({
-      nama_template: nama.trim(),
-      deskripsi: deskripsi.trim() || null,
-      drive_file_id: driveFileId.trim(),
-      aturan_penulisan: aturan.trim() || null,
-    });
-    setNama(""); setDeskripsi(""); setDriveFileId(""); setAturan("");
-    setAdding(false);
+    try {
+      await create.mutateAsync({
+        nama_template: nama.trim(),
+        deskripsi: deskripsi.trim() || null,
+        drive_file_id: driveFileId.trim(),
+        aturan_penulisan: aturan.trim() || null,
+      });
+      toast("Template berhasil ditambahkan", "success");
+      setNama(""); setDeskripsi(""); setDriveFileId(""); setAturan("");
+      setAdding(false);
+    } catch { toast("Gagal menambahkan template", "error"); }
   }
 
   async function handleEdit(id: string) {
     if (!editNama.trim() || !editDriveFileId.trim()) return;
-    await update.mutateAsync({
-      id,
-      nama_template: editNama.trim(),
-      deskripsi: editDeskripsi.trim() || null,
-      drive_file_id: editDriveFileId.trim(),
-      aturan_penulisan: editAturan.trim() || null,
-    });
-    setEditingId(null);
+    try {
+      await update.mutateAsync({
+        id,
+        nama_template: editNama.trim(),
+        deskripsi: editDeskripsi.trim() || null,
+        drive_file_id: editDriveFileId.trim(),
+        aturan_penulisan: editAturan.trim() || null,
+      });
+      toast("Template berhasil diperbarui", "success");
+      setEditingId(null);
+    } catch { toast("Gagal memperbarui template", "error"); }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("Hapus template ini?")) return;
+    try {
+      await del.mutateAsync(id);
+      toast("Template berhasil dihapus", "success");
+    } catch { toast("Gagal menghapus template", "error"); }
   }
 
   if (isLoading) return <div className="flex flex-1 items-center justify-center"><Loader2 size={24} className="animate-spin" /></div>;
@@ -127,7 +142,7 @@ export default function AdminTemplatePage() {
                       <Pencil size={14} />
                     </button>
                     <button
-                      onClick={() => { if (confirm("Hapus template ini?")) del.mutate(t.id); }}
+                      onClick={() => handleDelete(t.id)}
                       className="rounded p-1.5 text-destructive hover:bg-red-50 transition-colors"
                       title="Hapus"
                     >
