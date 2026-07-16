@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useComments, useCreateComment } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Badge } from "@/components/ui/badge";
@@ -12,17 +12,24 @@ export default function CommentSidebar({
   versionId,
   currentPage,
   onJumpToPage,
+  highlightedCommentId,
 }: {
   submissionId: string;
   versionId: string;
   currentPage: number;
   onJumpToPage: (page: number) => void;
+  highlightedCommentId?: string;
 }) {
   const { user } = useAuth();
   const { data: comments } = useComments(submissionId);
   const createComment = useCreateComment();
   const [komentar, setKomentar] = useState("");
   const [lokasiPasal, setLokasiPasal] = useState("");
+  const WARNA_DOT: Record<string, string> = {
+    merah: "bg-red-500",
+    kuning: "bg-yellow-500",
+    hijau: "bg-green-500",
+  };
   const [halaman, setHalaman] = useState<number>(currentPage);
 
   async function handleSend() {
@@ -38,6 +45,13 @@ export default function CommentSidebar({
     setKomentar("");
     setLokasiPasal("");
   }
+
+  useEffect(() => {
+    if (highlightedCommentId) {
+      const el = document.getElementById(`comment-${highlightedCommentId}`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightedCommentId]);
 
   return (
     <div className="space-y-4">
@@ -79,11 +93,17 @@ export default function CommentSidebar({
         {(comments ?? []).map((c) => (
           <div
             key={c.id}
-            className="cursor-pointer rounded-md border border-border p-3 transition-colors hover:bg-muted/50"
+            id={`comment-${c.id}`}
+            className={`cursor-pointer rounded-md border p-3 transition-colors hover:bg-muted/50 ${
+              highlightedCommentId === c.id ? "border-primary bg-primary/5" : "border-border"
+            }`}
             onClick={() => c.halaman && onJumpToPage(c.halaman)}
           >
             <div className="mb-1 flex items-center justify-between">
-              <span className="text-xs font-medium">{(c as any).user_nama?.nama_lengkap}</span>
+              <span className="flex items-center gap-1.5 text-xs font-medium">
+                {c.warna && <span className={`inline-block h-2 w-2 rounded-full ${WARNA_DOT[c.warna] ?? "bg-gray-400"}`} />}
+                {(c as any).user_nama?.nama_lengkap}
+              </span>
               <span className="text-[10px] text-muted-foreground">{formatTanggal(c.created_at)}</span>
             </div>
             <div className="mb-1 flex gap-1">

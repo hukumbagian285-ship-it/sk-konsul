@@ -129,7 +129,19 @@ export function useCreateAttachment() {
 export function useCreateComment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { submission_id: string; version_id: string; user_id: string; komentar: string; lokasi_pasal: string | null; halaman: number | null }) => {
+    mutationFn: async (payload: {
+      submission_id: string;
+      version_id: string;
+      user_id: string;
+      komentar: string;
+      lokasi_pasal: string | null;
+      halaman: number | null;
+      pos_x?: number | null;
+      pos_y?: number | null;
+      lebar?: number | null;
+      tinggi?: number | null;
+      warna?: string | null;
+    }) => {
       const { data, error } = await supabase.from("sk_comments").insert(payload).select().single();
       if (error) throw error;
       return data;

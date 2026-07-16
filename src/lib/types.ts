@@ -113,6 +113,11 @@ export interface SkComment {
   komentar: string;
   lokasi_pasal: string | null;
   halaman?: number | null;
+  pos_x?: number | null;
+  pos_y?: number | null;
+  lebar?: number | null;
+  tinggi?: number | null;
+  warna?: string | null;
   created_at: string;
 }
 

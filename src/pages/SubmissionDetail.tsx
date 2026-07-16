@@ -8,10 +8,11 @@ import { STATUS_WARNA, TRANSISI_SAH, type StatusSK } from "@/lib/types";
 import { formatTanggal, cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { useSubmission, useVersions, useStatusHistory, useUpdateStatus, useCreateVersion } from "@/lib/api";
+import { useSubmission, useVersions, useStatusHistory, useUpdateStatus, useCreateVersion, useComments, useCreateComment } from "@/lib/api";
 import { uploadViaGas } from "@/lib/gas-upload";
 import PdfViewer from "@/components/PdfViewer";
 import CommentSidebar from "@/components/CommentSidebar";
+import CommentPopover from "@/components/CommentPopover";
 import FinalisasiModal from "@/components/FinalisasiModal";
 
 export default function SubmissionDetail() {
@@ -23,10 +24,16 @@ export default function SubmissionDetail() {
   const updateStatus = useUpdateStatus();
 
   const createVersion = useCreateVersion();
+  const { data: comments = [] } = useComments(id);
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "error" | "done">("idle");
   const [currentPage, setCurrentPage] = useState(1);
   const [showFinalModal, setShowFinalModal] = useState(false);
+  const [annotationMode, setAnnotationMode] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState<{ page: number; x: number; y: number; w: number; h: number } | null>(null);
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
+
+  const createComment = useCreateComment();
 
   if (isLoading) return <div className="flex justify-center py-20"><Loader2 size={24} className="animate-spin text-muted-foreground" /></div>;
   if (!submission || !user) {
@@ -57,6 +64,27 @@ export default function SubmissionDetail() {
 
   function onJumpToPage(page: number) {
     setCurrentPage(page);
+    setHighlightedCommentId(null);
+  }
+
+  function handleSubmitAnnotation(data: { warna: string; pasal: string | null; komentar: string }) {
+    if (!selectedPosition || !id || !user) return;
+    createComment.mutate(
+      {
+        submission_id: id,
+        version_id: latestVersion?.id ?? "",
+        komentar: data.komentar,
+        lokasi_pasal: data.pasal,
+        warna: data.warna,
+        halaman: selectedPosition.page,
+        pos_x: selectedPosition.x,
+        pos_y: selectedPosition.y,
+        lebar: selectedPosition.w,
+        tinggi: selectedPosition.h,
+        user_id: user.id,
+      },
+      { onSuccess: () => setSelectedPosition(null) },
+    );
   }
 
   return (
@@ -110,9 +138,34 @@ export default function SubmissionDetail() {
             </CardHeader>
             <CardContent>
               {latestVersion ? (
-                <PdfViewer driveFileId={latestVersion.drive_file_id} onPageChange={setCurrentPage} />
+                <PdfViewer
+                  driveFileId={latestVersion.drive_file_id}
+                  comments={comments}
+                  annotationMode={annotationMode}
+                  onToggleAnnotation={() => setAnnotationMode((a) => !a)}
+                  selectedPosition={selectedPosition}
+                  onSelectPosition={setSelectedPosition}
+                  onCancelPosition={() => setSelectedPosition(null)}
+                  onCommentClick={(commentId) => {
+                    const c = comments.find((x) => x.id === commentId);
+                    if (c?.halaman) setCurrentPage(c.halaman);
+                    setHighlightedCommentId(commentId);
+                  }}
+                  onPageChange={setCurrentPage}
+                />
               ) : (
                 <p className="text-sm text-muted-foreground">Belum ada dokumen.</p>
+              )}
+              {selectedPosition && (
+                <CommentPopover
+                  style={{
+                    top: selectedPosition.y + 60,
+                    left: selectedPosition.x + 20,
+                  }}
+                  onSubmit={handleSubmitAnnotation}
+                  onCancel={() => setSelectedPosition(null)}
+                  pending={createComment.isPending}
+                />
               )}
             </CardContent>
           </Card>
@@ -174,6 +227,7 @@ export default function SubmissionDetail() {
                   versionId={latestVersion?.id ?? ""}
                   currentPage={currentPage}
                   onJumpToPage={onJumpToPage}
+                  highlightedCommentId={highlightedCommentId ?? undefined}
                 />
               </CardContent>
             </Card>
