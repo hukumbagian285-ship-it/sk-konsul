@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Document, pdfjs } from "react-pdf";
 import { ChevronLeft, ChevronRight, Loader2, ZoomIn, ZoomOut, PenBox } from "lucide-react";
 import type { SkComment } from "@/lib/types";
@@ -13,7 +13,6 @@ interface PdfViewerProps {
   onToggleAnnotation: () => void;
   selectedPosition: { page: number; x: number; y: number; w: number; h: number } | null;
   onSelectPosition: (pos: { page: number; x: number; y: number; w: number; h: number }) => void;
-  onCancelPosition: () => void;
   onCommentClick: (commentId: string) => void;
   onPageChange?: (page: number) => void;
 }
@@ -25,7 +24,6 @@ export default function PdfViewer({
   onToggleAnnotation,
   selectedPosition,
   onSelectPosition,
-  onCancelPosition,
   onCommentClick,
   onPageChange,
 }: PdfViewerProps) {
@@ -34,6 +32,7 @@ export default function PdfViewer({
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1);
   const [loading, setLoading] = useState(true);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   function onLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
@@ -43,9 +42,12 @@ export default function PdfViewer({
   function goToPage(page: number) {
     const p = Math.max(1, Math.min(page, numPages));
     setPageNumber(p);
-    onCancelPosition();
     onPageChange?.(p);
   }
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0);
+  }, [pageNumber]);
 
   return (
     <div className="flex flex-col items-center">
@@ -67,7 +69,7 @@ export default function PdfViewer({
         </button>
       </div>
 
-      <div className="relative max-h-[70vh] overflow-auto rounded-md border border-border">
+      <div ref={scrollRef} className="relative max-h-[70vh] overflow-auto rounded-md border border-border">
         {loading && (
           <div className="flex h-64 items-center justify-center">
             <Loader2 size={24} className="animate-spin text-muted-foreground" />

@@ -27,7 +27,7 @@ export default function SubmissionDetail() {
   const { data: comments = [] } = useComments(id);
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "error" | "done">("idle");
-  const [, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [showFinalModal, setShowFinalModal] = useState(false);
   const [annotationMode, setAnnotationMode] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<{ page: number; x: number; y: number; w: number; h: number } | null>(null);
@@ -145,7 +145,6 @@ export default function SubmissionDetail() {
                   onToggleAnnotation={() => setAnnotationMode((a) => !a)}
                   selectedPosition={selectedPosition}
                   onSelectPosition={setSelectedPosition}
-                  onCancelPosition={() => setSelectedPosition(null)}
                   onCommentClick={(commentId) => {
                     const c = comments.find((x) => x.id === commentId);
                     if (c?.halaman) setCurrentPage(c.halaman);
@@ -156,7 +155,7 @@ export default function SubmissionDetail() {
               ) : (
                 <p className="text-sm text-muted-foreground">Belum ada dokumen.</p>
               )}
-              {selectedPosition && (
+              {selectedPosition?.page === currentPage && (
                 <CommentPopover
                   style={{
                     top: selectedPosition.y + 60,
