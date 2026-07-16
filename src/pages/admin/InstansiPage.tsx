@@ -32,10 +32,10 @@ export default function InstansiPage() {
     setEditingId(null);
   }
 
-  if (isLoading) return <div className="flex justify-center py-20"><Loader2 size={24} className="animate-spin" /></div>;
+  if (isLoading) return <div className="flex flex-1 items-center justify-center"><Loader2 size={24} className="animate-spin" /></div>;
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-5xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="font-display text-xl font-semibold text-foreground">Instansi / OPD</h1>
@@ -59,50 +59,81 @@ export default function InstansiPage() {
         </Card>
       )}
 
-      <Card>
-        <CardContent className="divide-y divide-border p-0">
-          {instansi?.length === 0 && (
-            <p className="p-6 text-center text-sm text-muted-foreground">Belum ada instansi.</p>
-          )}
-          {(instansi ?? []).map((i) => (
-            <div key={i.id} className="flex items-center justify-between gap-4 px-4 py-3">
-              {editingId === i.id ? (
-                <div className="flex flex-1 items-center gap-2">
-                  <Input value={editKode} onChange={(e) => setEditKode(e.target.value)} className="h-8 w-32 text-sm" />
-                  <Input value={editNama} onChange={(e) => setEditNama(e.target.value)} className="h-8 flex-1 text-sm" />
-                  <Button size="sm" disabled={!editKode.trim() || !editNama.trim()} onClick={() => handleEdit(i.id)}>
-                    <Check size={14} />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>
-                    <XIcon size={14} />
-                  </Button>
+      {/* mobile card list */}
+      <div className="divide-y divide-border rounded-lg border md:hidden">
+        {instansi?.length === 0 && (
+          <p className="p-6 text-center text-sm text-muted-foreground">Belum ada instansi.</p>
+        )}
+        {(instansi ?? []).map((i) => (
+          <div key={i.id} className="flex items-center justify-between gap-4 px-4 py-3">
+            {editingId === i.id ? (
+              <div className="flex flex-1 items-center gap-2">
+                <Input value={editKode} onChange={(e) => setEditKode(e.target.value)} className="h-8 w-32 text-sm" />
+                <Input value={editNama} onChange={(e) => setEditNama(e.target.value)} className="h-8 flex-1 text-sm" />
+                <Button size="sm" disabled={!editKode.trim() || !editNama.trim()} onClick={() => handleEdit(i.id)}><Check size={14} /></Button>
+                <Button size="sm" variant="outline" onClick={() => setEditingId(null)}><XIcon size={14} /></Button>
+              </div>
+            ) : (
+              <>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground">{i.nama_instansi}</p>
+                  <p className="text-xs text-muted-foreground">Kode: {i.kode_instansi}</p>
                 </div>
-              ) : (
-                <>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground">{i.nama_instansi}</p>
-                    <p className="text-xs text-muted-foreground">Kode: {i.kode_instansi}</p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => { setEditingId(i.id); setEditKode(i.kode_instansi); setEditNama(i.nama_instansi); }}
-                      className="rounded p-1 text-muted-foreground hover:bg-muted"
-                      title="Edit"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      onClick={() => { if (confirm(`Hapus ${i.nama_instansi}?`)) del.mutate(i.id); }}
-                      className="rounded p-1 text-red-500 hover:bg-red-50"
-                      title="Hapus"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
+                <div className="flex items-center gap-1">
+                  <button onClick={() => { setEditingId(i.id); setEditKode(i.kode_instansi); setEditNama(i.nama_instansi); }}
+                    className="rounded p-1 text-muted-foreground hover:bg-muted" title="Edit"><Pencil size={14} /></button>
+                  <button onClick={() => { if (confirm(`Hapus ${i.nama_instansi}?`)) del.mutate(i.id); }}
+                    className="rounded p-1 text-red-500 hover:bg-red-50" title="Hapus"><Trash2 size={14} /></button>
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* desktop table */}
+      <Card className="hidden md:block">
+        <CardContent className="p-0">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+                <th className="px-4 py-3 font-medium">Kode</th>
+                <th className="px-4 py-3 font-medium">Nama Instansi</th>
+                <th className="px-4 py-3 font-medium">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {(instansi ?? []).map((i) => (
+                <tr key={i.id}>
+                  {editingId === i.id ? (
+                    <>
+                      <td className="px-4 py-2"><Input value={editKode} onChange={(e) => setEditKode(e.target.value)} className="h-8 w-28 text-sm" /></td>
+                      <td className="px-4 py-2"><Input value={editNama} onChange={(e) => setEditNama(e.target.value)} className="h-8 text-sm" /></td>
+                      <td className="px-4 py-2">
+                        <div className="flex gap-1">
+                          <Button size="sm" disabled={!editKode.trim() || !editNama.trim()} onClick={() => handleEdit(i.id)}><Check size={14} /></Button>
+                          <Button size="sm" variant="outline" onClick={() => setEditingId(null)}><XIcon size={14} /></Button>
+                        </div>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="px-4 py-3 font-mono text-xs uppercase">{i.kode_instansi}</td>
+                      <td className="px-4 py-3 font-medium">{i.nama_instansi}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1">
+                          <button onClick={() => { setEditingId(i.id); setEditKode(i.kode_instansi); setEditNama(i.nama_instansi); }}
+                            className="rounded p-1 text-muted-foreground hover:bg-muted" title="Edit"><Pencil size={14} /></button>
+                          <button onClick={() => { if (confirm(`Hapus ${i.nama_instansi}?`)) del.mutate(i.id); }}
+                            className="rounded p-1 text-red-500 hover:bg-red-50" title="Hapus"><Trash2 size={14} /></button>
+                        </div>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </CardContent>
       </Card>
     </div>

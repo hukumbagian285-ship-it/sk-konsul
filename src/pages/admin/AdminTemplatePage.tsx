@@ -47,10 +47,10 @@ export default function AdminTemplatePage() {
     setEditingId(null);
   }
 
-  if (isLoading) return <div className="flex justify-center py-20"><Loader2 size={24} className="animate-spin" /></div>;
+  if (isLoading) return <div className="flex flex-1 items-center justify-center"><Loader2 size={24} className="animate-spin" /></div>;
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-5xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="font-display text-xl font-semibold text-foreground">Template Dokumen</h1>
