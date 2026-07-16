@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -9,9 +10,10 @@ import {
   Building2,
   Users,
   LogOut,
+  ChevronLeft,
 } from "lucide-react";
 
-function NavLink({ to, icon: Icon, label, active }: { to: string; icon: any; label: string; active: boolean }) {
+function NavLink({ to, icon: Icon, label, active, collapsed }: { to: string; icon: any; label: string; active: boolean; collapsed: boolean }) {
   return (
     <Link
       to={to}
@@ -22,7 +24,7 @@ function NavLink({ to, icon: Icon, label, active }: { to: string; icon: any; lab
       }`}
     >
       <Icon size={18} />
-      <span>{label}</span>
+      {!collapsed && <span>{label}</span>}
     </Link>
   );
 }
@@ -30,45 +32,74 @@ function NavLink({ to, icon: Icon, label, active }: { to: string; icon: any; lab
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const [collapsed, setCollapsed] = React.useState(() => {
+    try { return localStorage.getItem("sk_sidebar_collapsed") === "true"; }
+    catch { return false; }
+  });
+
+  function toggleSidebar() {
+    setCollapsed((c) => {
+      const next = !c;
+      localStorage.setItem("sk_sidebar_collapsed", String(next));
+      return next;
+    });
+  }
 
   return (
     <div className="flex min-h-dvh flex-col md:flex-row">
       {/* Sidebar desktop */}
-      <aside className="hidden w-56 shrink-0 border-r border-border bg-card md:flex md:flex-col">
+      <aside className={`hidden shrink-0 border-r border-border bg-card transition-[width] duration-200 md:flex md:flex-col ${collapsed ? "w-16" : "w-56"}`}>
         <div className="flex h-14 items-center gap-2 border-b border-border px-4">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-[10px] font-bold text-primary-foreground">
-            SK
-          </div>
-          <div className="leading-tight">
-            <p className="text-sm font-semibold">Konsultasi SK</p>
-            <p className="text-[10px] text-muted-foreground">Bagian Hukum — Setda</p>
-          </div>
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary text-[10px] font-bold text-primary-foreground">SK</div>
+          {!collapsed && (
+            <div className="leading-tight">
+              <p className="text-sm font-semibold">Konsultasi SK</p>
+              <p className="text-[10px] text-muted-foreground">Bagian Hukum — Setda</p>
+            </div>
+          )}
         </div>
 
         <nav className="flex-1 space-y-1 px-2 py-4">
-          <NavLink to="/" icon={LayoutDashboard} label="Beranda" active={location.pathname === "/"} />
-          <NavLink to="/submissions/new" icon={FilePlus} label="Ajukan SK" active={location.pathname === "/submissions/new"} />
-          <NavLink to="/tracking" icon={FileSearch} label="Tracking" active={location.pathname === "/tracking"} />
-          <NavLink to="/templates" icon={FileText} label="Template" active={location.pathname === "/templates"} />
+          <NavLink to="/" icon={LayoutDashboard} label="Beranda" active={location.pathname === "/"} collapsed={collapsed} />
+          <NavLink to="/submissions/new" icon={FilePlus} label="Ajukan SK" active={location.pathname === "/submissions/new"} collapsed={collapsed} />
+          <NavLink to="/tracking" icon={FileSearch} label="Tracking" active={location.pathname === "/tracking"} collapsed={collapsed} />
+          <NavLink to="/templates" icon={FileText} label="Template" active={location.pathname === "/templates"} collapsed={collapsed} />
           {user?.role === "super_admin" && (
             <>
-              <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Admin
-              </p>
-              <NavLink to="/admin/kategori" icon={FolderKanban} label="Kategori" active={location.pathname === "/admin/kategori"} />
-              <NavLink to="/admin/instansi" icon={Building2} label="Instansi" active={location.pathname === "/admin/instansi"} />
-              <NavLink to="/admin/akun" icon={Users} label="Akun" active={location.pathname === "/admin/akun"} />
+              {!collapsed && (
+                <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Admin
+                </p>
+              )}
+              <NavLink to="/admin/kategori" icon={FolderKanban} label="Kategori" active={location.pathname === "/admin/kategori"} collapsed={collapsed} />
+              <NavLink to="/admin/instansi" icon={Building2} label="Instansi" active={location.pathname === "/admin/instansi"} collapsed={collapsed} />
+              <NavLink to="/admin/akun" icon={Users} label="Akun" active={location.pathname === "/admin/akun"} collapsed={collapsed} />
             </>
           )}
         </nav>
 
         <div className="border-t border-border px-3 py-3">
-          <p className="text-xs font-medium text-foreground">{user?.nama_lengkap}</p>
-          <p className="text-[10px] capitalize text-muted-foreground">{user?.role}</p>
+          {!collapsed ? (
+            <>
+              <p className="text-xs font-medium text-foreground">{user?.nama_lengkap}</p>
+              <p className="text-[10px] capitalize text-muted-foreground">{user?.role}</p>
+            </>
+          ) : (
+            <p className="text-center text-xs font-bold text-foreground">{user?.nama_lengkap?.charAt(0)}</p>
+          )}
         </div>
 
-        <button onClick={logout} className="flex items-center gap-2 border-t border-border px-4 py-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
-          <LogOut size={16} /> Keluar
+        <button onClick={logout} className="flex items-center justify-center gap-2 border-t border-border px-4 py-3 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
+          <LogOut size={16} />
+          {!collapsed && <span>Keluar</span>}
+        </button>
+
+        <button
+          onClick={toggleSidebar}
+          className="flex items-center justify-center gap-2 border-t border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <ChevronLeft size={16} className={`transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`} />
+          {!collapsed && <span>Ciutkan</span>}
         </button>
       </aside>
 
