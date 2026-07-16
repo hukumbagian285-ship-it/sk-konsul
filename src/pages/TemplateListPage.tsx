@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { FileText, Loader2, ChevronRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { FileText, Loader2, ArrowRight, BookOpen } from "lucide-react";
 import { useTemplates } from "@/lib/api";
 
 export default function TemplateListPage() {
@@ -10,36 +9,83 @@ export default function TemplateListPage() {
 
   return (
     <div className="w-full max-w-6xl mx-auto">
-      <div className="mb-8 border-b border-border pb-6">
-        <h1 className="font-display text-2xl font-semibold text-foreground">Template Dokumen</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Panduan format dan contoh dokumen SK</p>
+      <div className="mb-10">
+        <div className="flex items-center gap-2 text-primary mb-2">
+          <BookOpen size={16} />
+          <span className="text-xs font-semibold uppercase tracking-widest">Dokumen Resmi</span>
+        </div>
+        <h1 className="font-display text-3xl font-semibold text-foreground">Template Dokumen</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground max-w-lg">
+          Panduan format dan contoh dokumen surat keputusan yang dapat Anda gunakan sebagai acuan.
+        </p>
       </div>
 
       {templates?.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border py-16">
-          <FileText size={40} className="text-muted-foreground/40" />
-          <p className="mt-3 text-sm text-muted-foreground">Belum ada template tersedia.</p>
+        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-20">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+            <FileText size={28} className="text-muted-foreground/60" />
+          </div>
+          <p className="mt-4 text-sm font-medium text-foreground">Belum ada template</p>
+          <p className="mt-1 text-xs text-muted-foreground">Template akan muncul setelah ditambahkan oleh admin.</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {(templates ?? []).map((t) => (
-          <Link key={t.id} to={`/templates/${t.id}`} className="group">
-            <Card className="h-full transition-all duration-200 hover:border-primary/30 hover:shadow-sm">
-              <CardContent className="flex items-start gap-4 p-5">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
-                  <FileText size={20} />
+      {templates && templates.length === 1 && (
+        <div>
+          {templates.map((t) => (
+            <Link key={t.id} to={`/templates/${t.id}`} className="group block">
+              <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-white to-muted/30 transition-all duration-200 hover:border-primary/30 hover:shadow-md">
+                <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-primary/[0.03]" />
+                <div className="relative flex items-start gap-5 p-6 sm:p-8">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                    <FileText size={24} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {t.nama_template}
+                    </h2>
+                    {t.deskripsi && (
+                      <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{t.deskripsi}</p>
+                    )}
+                    <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                      Lihat Template <ArrowRight size={14} />
+                    </div>
+                  </div>
+                  <div className="hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-primary/30 group-hover:bg-primary/10 group-hover:text-primary transition-all">
+                    <ArrowRight size={20} />
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{t.nama_template}</p>
-                  {t.deskripsi && <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">{t.deskripsi}</p>}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {templates && templates.length > 1 && (
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {(templates ?? []).map((t) => (
+            <Link key={t.id} to={`/templates/${t.id}`} className="group">
+              <div className="relative overflow-hidden rounded-xl border border-border bg-card transition-all duration-200 hover:border-primary/30 hover:shadow-sm">
+                <div className="absolute right-0 top-0 h-24 w-24 translate-x-6 -translate-y-6 rounded-full bg-primary/[0.02]" />
+                <div className="relative p-5">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+                    <FileText size={20} />
+                  </div>
+                  <h3 className="mt-4 text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                    {t.nama_template}
+                  </h3>
+                  {t.deskripsi && (
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed line-clamp-2">{t.deskripsi}</p>
+                  )}
+                  <div className="mt-4 flex items-center gap-1 text-xs font-medium text-primary/70 group-hover:text-primary transition-colors">
+                    Lihat <ArrowRight size={12} />
+                  </div>
                 </div>
-                <ChevronRight size={16} className="mt-1 shrink-0 text-muted-foreground/30 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
