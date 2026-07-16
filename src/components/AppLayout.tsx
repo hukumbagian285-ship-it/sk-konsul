@@ -48,14 +48,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col md:flex-row">
       {/* Sidebar desktop */}
-      <aside className={`hidden shrink-0 border-r border-border bg-card transition-[width] duration-200 md:flex md:flex-col ${collapsed ? "w-16" : "w-56"}`}>
-        <div className="flex h-14 items-center gap-2 border-b border-border px-4">
+      <aside className={`hidden h-dvh shrink-0 border-r border-border bg-card transition-[width] duration-200 md:sticky md:top-0 md:flex md:flex-col ${collapsed ? "w-16" : "w-56"}`}>
+        <div className="flex h-14 items-center border-b border-border px-4">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary text-[10px] font-bold text-primary-foreground">SK</div>
           {!collapsed && (
-            <div className="leading-tight">
-              <p className="text-sm font-semibold">Konsultasi SK</p>
-              <p className="text-[10px] text-muted-foreground">Bagian Hukum — Setda</p>
-            </div>
+            <>
+              <div className="mx-2 leading-tight">
+                <p className="text-sm font-semibold">Konsultasi SK</p>
+                <p className="text-[10px] text-muted-foreground">Bagian Hukum — Setda</p>
+              </div>
+              <button
+                onClick={toggleSidebar}
+                className="ml-auto flex items-center gap-1 rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <ChevronLeft size={14} className="transition-transform duration-200" />
+                <span>Ciutkan</span>
+              </button>
+            </>
+          )}
+          {collapsed && (
+            <button
+              onClick={toggleSidebar}
+              className="ml-auto flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <ChevronLeft size={14} className="rotate-180 transition-transform duration-200" />
+            </button>
           )}
         </div>
 
