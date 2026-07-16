@@ -126,7 +126,7 @@ export default function SubmissionDetail() {
         </Card>
       )}
 
-      <div className="flex flex-1 gap-6 min-h-0 pb-6">
+      <div className="flex flex-1 flex-col gap-6 min-h-0 pb-6 lg:flex-row">
         <Card className="flex min-h-0 flex-1 flex-col">
           <CardHeader className="flex-shrink-0">
             <CardTitle className="flex items-center gap-2"><FileText size={16} /> Dokumen</CardTitle>
@@ -166,7 +166,7 @@ export default function SubmissionDetail() {
           </CardContent>
         </Card>
 
-        <div className="hidden w-[380px] flex-shrink-0 space-y-6 overflow-y-auto lg:block">
+        <div className="w-full flex-shrink-0 space-y-6 overflow-y-auto lg:w-[380px]">
           {bolehUploadVersi && (
             <Card>
               <CardContent className="p-4">
