@@ -35,8 +35,8 @@ export default function TemplateListPage() {
           {templates.map((t) => (
             <Link key={t.id} to={`/templates/${t.id}`} className="group block">
               <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-white to-muted/30 transition-all duration-200 hover:border-primary/30 hover:shadow-md">
-                <div className="absolute right-0 top-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-primary/[0.03]" />
-                <div className="relative flex items-start gap-5 p-6 sm:p-8">
+                <div className="absolute right-0 top-0 h-40 w-40 translate-x-10 -translate-y-10 rounded-full bg-primary/[0.03]" />
+                <div className="relative flex items-center gap-5 p-6 sm:p-8">
                   <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
                     <FileText size={24} />
                   </div>
@@ -47,12 +47,9 @@ export default function TemplateListPage() {
                     {t.deskripsi && (
                       <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{t.deskripsi}</p>
                     )}
-                    <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="mt-3 flex items-center gap-1 text-sm font-medium text-primary">
                       Lihat Template <ArrowRight size={14} />
                     </div>
-                  </div>
-                  <div className="hidden sm:flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-primary/30 group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                    <ArrowRight size={20} />
                   </div>
                 </div>
               </div>
