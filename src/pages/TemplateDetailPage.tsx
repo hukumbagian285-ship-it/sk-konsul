@@ -1,6 +1,5 @@
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Loader2, ExternalLink } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTemplate } from "@/lib/api";
 
 export default function TemplateDetailPage() {
@@ -20,25 +19,23 @@ export default function TemplateDetailPage() {
       {template.deskripsi && <p className="mb-4 text-sm text-muted-foreground">{template.deskripsi}</p>}
 
       {template.aturan_penulisan && (
-        <Card className="mb-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Aturan Penulisan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="whitespace-pre-wrap text-sm text-foreground">{template.aturan_penulisan}</div>
-          </CardContent>
-        </Card>
+        <details className="group mb-4">
+          <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            Aturan Penulisan
+          </summary>
+          <div className="mt-2 whitespace-pre-wrap rounded-lg border bg-muted/30 px-4 py-3 text-sm text-foreground">
+            {template.aturan_penulisan}
+          </div>
+        </details>
       )}
 
-      <Card className="flex-1">
-        <CardContent className="h-full p-0">
-          <iframe
-            src={`https://docs.google.com/document/d/${template.drive_file_id}/preview`}
-            className="h-full w-full rounded-lg border-0"
-            title="Pratinjau dokumen"
-          />
-        </CardContent>
-      </Card>
+      <div className="flex-1 min-h-0 rounded-lg border bg-card overflow-hidden">
+        <iframe
+          src={`https://docs.google.com/document/d/${template.drive_file_id}/preview`}
+          className="h-full w-full"
+          title="Pratinjau dokumen"
+        />
+      </div>
 
       <a
         href={`https://docs.google.com/document/d/${template.drive_file_id}/edit`}
