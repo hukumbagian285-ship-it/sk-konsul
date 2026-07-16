@@ -104,7 +104,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 px-4 pt-4 pb-24 md:pb-6">{children}</main>
+      <main className="flex flex-1 flex-col px-4 pt-4 pb-24 md:pb-6">{children}</main>
 
       {/* Bottom nav mobile */}
       <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-card py-2 md:hidden">
