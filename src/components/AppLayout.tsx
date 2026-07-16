@@ -60,10 +60,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
               <button
                 onClick={toggleSidebar}
-                className="ml-auto flex items-center gap-1 rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="ml-auto flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <ChevronLeft size={14} className="transition-transform duration-200" />
-                <span>Ciutkan</span>
               </button>
             </>
           )}
