@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Document, pdfjs } from "react-pdf";
 import { ChevronLeft, ChevronRight, Loader2, ZoomIn, ZoomOut, PenBox } from "lucide-react";
 import type { SkComment } from "@/lib/types";
@@ -42,6 +42,16 @@ export default function PdfViewer({
 
   const pendingScroll = useRef<number | null>(null);
 
+  const preloadPages = useMemo(() => {
+    if (numPages === 0) return [];
+    const pages: number[] = [];
+    for (let i = 0; i < 3; i++) {
+      const p = pageNumber + i;
+      if (p <= numPages) pages.push(p);
+    }
+    return pages;
+  }, [pageNumber, numPages]);
+
   function goToPage(page: number) {
     const p = Math.max(1, Math.min(page, numPages));
     scrollPositions.current[pageNumber] = scrollRef.current?.scrollTop ?? 0;
@@ -84,16 +94,22 @@ export default function PdfViewer({
           </div>
         )}
         <Document file={url} onLoadSuccess={onLoadSuccess} onLoadError={() => setLoading(false)}>
-          <AnnotatedPage
-            pageNumber={pageNumber}
-            comments={comments}
-            annotationMode={annotationMode}
-            selectedPosition={selectedPosition?.page === pageNumber ? selectedPosition : null}
-            scale={scale}
-            onSelectPosition={onSelectPosition}
-            onCommentClick={onCommentClick}
-            onPageRendered={handlePageRendered}
-          />
+          <div className="relative">
+            {preloadPages.map((p) => (
+              <div key={p} className={p === pageNumber ? "" : "absolute inset-0 pointer-events-none opacity-0"}>
+                <AnnotatedPage
+                  pageNumber={p}
+                  comments={comments}
+                  annotationMode={annotationMode}
+                  selectedPosition={selectedPosition?.page === p ? selectedPosition : null}
+                  scale={scale}
+                  onSelectPosition={onSelectPosition}
+                  onCommentClick={onCommentClick}
+                  onPageRendered={handlePageRendered}
+                />
+              </div>
+            ))}
+          </div>
         </Document>
       </div>
 
