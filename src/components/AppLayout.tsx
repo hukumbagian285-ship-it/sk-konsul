@@ -111,14 +111,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <LogOut size={16} />
           {!collapsed && <span>Keluar</span>}
         </button>
-
-        <button
-          onClick={toggleSidebar}
-          className="flex items-center justify-center gap-2 border-t border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <ChevronLeft size={16} className={`transition-transform duration-200 ${collapsed ? "rotate-180" : ""}`} />
-          {!collapsed && <span>Ciutkan</span>}
-        </button>
       </aside>
 
       {/* Main content */}
