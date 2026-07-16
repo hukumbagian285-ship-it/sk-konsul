@@ -1,50 +1,24 @@
-import { useState, useEffect } from "react";
-import { useComments, useCreateComment } from "@/lib/api";
-import { useAuth } from "@/lib/auth-context";
+import { useEffect } from "react";
+import { useComments } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/input";
-import { MessageSquare, Send } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { formatTanggal } from "@/lib/utils";
 
 export default function CommentSidebar({
   submissionId,
-  versionId,
-  currentPage,
   onJumpToPage,
   highlightedCommentId,
 }: {
   submissionId: string;
-  versionId: string;
-  currentPage: number;
   onJumpToPage: (page: number) => void;
   highlightedCommentId?: string;
 }) {
-  const { user } = useAuth();
   const { data: comments } = useComments(submissionId);
-  const createComment = useCreateComment();
-  const [komentar, setKomentar] = useState("");
-  const [lokasiPasal, setLokasiPasal] = useState("");
   const WARNA_DOT: Record<string, string> = {
     merah: "bg-red-500",
     kuning: "bg-yellow-500",
     hijau: "bg-green-500",
   };
-  const [halaman, setHalaman] = useState<number>(currentPage);
-
-  async function handleSend() {
-    if (!komentar.trim()) return;
-    await createComment.mutateAsync({
-      submission_id: submissionId,
-      version_id: versionId,
-      user_id: user!.id,
-      komentar: komentar.trim(),
-      lokasi_pasal: lokasiPasal.trim() || null,
-      halaman: halaman || null,
-    });
-    setKomentar("");
-    setLokasiPasal("");
-  }
 
   useEffect(() => {
     if (highlightedCommentId) {
@@ -59,32 +33,7 @@ export default function CommentSidebar({
         <MessageSquare size={14} /> Komentar Perbaikan
       </h3>
 
-      <div className="space-y-2 rounded-md border border-border p-3">
-        <div className="flex gap-2">
-          <input
-            className="w-16 rounded-md border border-border bg-card px-2 py-1.5 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            placeholder="Hal."
-            type="number"
-            min={1}
-            value={halaman}
-            onChange={(e) => setHalaman(Number(e.target.value))}
-          />
-          <input
-            className="flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            placeholder="Pasal (contoh: Pasal 4 Ayat 2)"
-            value={lokasiPasal}
-            onChange={(e) => setLokasiPasal(e.target.value)}
-          />
-        </div>
-        <Textarea
-          placeholder="Tulis catatan perbaikan..."
-          value={komentar}
-          onChange={(e) => setKomentar(e.target.value)}
-        />
-        <div className="flex justify-end">
-          <Button size="sm" disabled={!komentar.trim() || createComment.isPending} onClick={handleSend}><Send size={12} className="mr-1" /> Kirim</Button>
-        </div>
-      </div>
+      <p className="text-xs text-muted-foreground">Klik ikon pena di atas PDF, lalu drag pada teks untuk menambahkan catatan.</p>
 
       <div className="space-y-2 max-h-[50vh] overflow-y-auto">
         {(!comments || comments.length === 0) && (

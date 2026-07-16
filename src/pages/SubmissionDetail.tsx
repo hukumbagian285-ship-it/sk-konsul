@@ -27,7 +27,7 @@ export default function SubmissionDetail() {
   const { data: comments = [] } = useComments(id);
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "error" | "done">("idle");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [, setCurrentPage] = useState(1);
   const [showFinalModal, setShowFinalModal] = useState(false);
   const [annotationMode, setAnnotationMode] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<{ page: number; x: number; y: number; w: number; h: number } | null>(null);
@@ -224,8 +224,6 @@ export default function SubmissionDetail() {
               <CardContent className="p-4">
                 <CommentSidebar
                   submissionId={sub.id}
-                  versionId={latestVersion?.id ?? ""}
-                  currentPage={currentPage}
                   onJumpToPage={onJumpToPage}
                   highlightedCommentId={highlightedCommentId ?? undefined}
                 />
