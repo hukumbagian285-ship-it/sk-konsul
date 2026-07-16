@@ -50,7 +50,7 @@ export default function AdminTemplatePage() {
   if (isLoading) return <div className="flex flex-1 items-center justify-center"><Loader2 size={24} className="animate-spin" /></div>;
 
   return (
-    <div className="w-full max-w-5xl">
+    <div className="w-full max-w-6xl mx-auto">
       <div className="mb-8 border-b border-border pb-6 flex items-start justify-between">
         <div>
           <h1 className="font-display text-2xl font-semibold text-foreground">Template Dokumen</h1>

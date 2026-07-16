@@ -88,7 +88,7 @@ export default function SubmissionDetail() {
   }
 
   return (
-    <div className="flex w-full max-w-6xl flex-1 flex-col min-h-0">
+    <div className="flex w-full max-w-6xl flex-1 flex-col min-h-0 mx-auto">
       <Link to="/" className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft size={14} /> Kembali ke papan
       </Link>
