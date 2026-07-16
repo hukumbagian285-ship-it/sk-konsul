@@ -7,16 +7,16 @@
     @apply bg-background text-foreground;
   }
   body {
-    @apply font-body antialiased leading-relaxed;
+    @apply font-body antialiased;
   }
   h1, h2, h3, h4 {
-    @apply font-display font-semibold tracking-tight;
+    @apply font-display;
   }
   ::selection {
-    @apply bg-primary/15;
+    @apply bg-primary/20;
   }
   :focus-visible {
-    outline: 2px solid hsl(var(--ring));
+    outline: 2px solid #2563EB;
     outline-offset: 2px;
   }
 }
