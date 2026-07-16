@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Plus, Pencil, Trash2, Loader2, Check, X as XIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Check, X as XIcon, FolderKanban } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
@@ -40,10 +40,10 @@ export default function CategoriesPage() {
 
   return (
     <div className="w-full max-w-5xl">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-8 border-b border-border pb-6 flex items-start justify-between">
         <div>
-          <h1 className="font-display text-xl font-semibold text-foreground">Kategori SK</h1>
-          <p className="text-sm text-muted-foreground">Kelola jenis-jenis surat keputusan</p>
+          <h1 className="font-display text-2xl font-semibold text-foreground">Kategori SK</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Kelola jenis-jenis surat keputusan</p>
         </div>
         <Button size="sm" onClick={() => setAdding(true)}>
           <Plus size={16} /> Tambah
@@ -51,8 +51,8 @@ export default function CategoriesPage() {
       </div>
 
       {adding && (
-        <Card className="mb-4 border-primary/30">
-          <CardContent className="space-y-3 pt-4">
+        <Card className="mb-6 border-accent/30">
+          <CardContent className="space-y-3 pt-5">
             <Input placeholder="Nama kategori" value={nama} onChange={(e) => setNama(e.target.value)} autoFocus />
             <Textarea placeholder="Deskripsi (opsional)" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} />
             <div className="flex gap-2">
@@ -66,7 +66,10 @@ export default function CategoriesPage() {
       {/* mobile card list */}
       <div className="divide-y divide-border rounded-lg border md:hidden">
         {categories?.length === 0 && (
-          <p className="p-6 text-center text-sm text-muted-foreground">Belum ada kategori.</p>
+          <div className="flex flex-col items-center justify-center py-12">
+            <FolderKanban size={32} className="text-muted-foreground/30" />
+            <p className="mt-2 text-sm text-muted-foreground">Belum ada kategori.</p>
+          </div>
         )}
         {(categories ?? []).map((cat) => (
           <div key={cat.id} className="flex items-center justify-between gap-4 px-4 py-3">
@@ -83,19 +86,19 @@ export default function CategoriesPage() {
             ) : (
               <>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground">{cat.nama_kategori}</p>
-                  {cat.deskripsi && <p className="text-xs text-muted-foreground">{cat.deskripsi}</p>}
+                  <p className="text-sm font-semibold text-foreground">{cat.nama_kategori}</p>
+                  {cat.deskripsi && <p className="mt-0.5 text-xs text-muted-foreground">{cat.deskripsi}</p>}
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className={`inline-block h-2 w-2 rounded-full ${cat.is_active ? "bg-emerald-500" : "bg-slate-300"}`} />
+                  <span className={`inline-block h-2 w-2 rounded-full ${cat.is_active ? "bg-accent" : "bg-slate-300"}`} />
                   <button onClick={() => { setEditingId(cat.id); setEditNama(cat.nama_kategori); setEditDeskripsi(cat.deskripsi ?? ""); }}
-                    className="rounded p-1 text-muted-foreground hover:bg-muted" title="Edit"><Pencil size={14} /></button>
+                    className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Edit"><Pencil size={14} /></button>
                   <button onClick={() => handleToggleActive(cat.id, cat.is_active)}
-                    className="rounded p-1 text-muted-foreground hover:bg-muted" title={cat.is_active ? "Nonaktifkan" : "Aktifkan"}>
+                    className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors" title={cat.is_active ? "Nonaktifkan" : "Aktifkan"}>
                     {cat.is_active ? <XIcon size={14} /> : <Check size={14} />}
                   </button>
                   <button onClick={() => { if (confirm("Hapus kategori ini?")) del.mutate(cat.id); }}
-                    className="rounded p-1 text-red-500 hover:bg-red-50" title="Hapus"><Trash2 size={14} /></button>
+                    className="rounded p-1.5 text-destructive hover:bg-red-50 transition-colors" title="Hapus"><Trash2 size={14} /></button>
                 </div>
               </>
             )}
@@ -104,25 +107,25 @@ export default function CategoriesPage() {
       </div>
 
       {/* desktop table */}
-      <Card className="hidden md:block">
-        <CardContent className="p-0">
+      <Card className="hidden md:block overflow-hidden">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-                <th className="px-4 py-3 font-medium">Nama Kategori</th>
-                <th className="px-4 py-3 font-medium">Deskripsi</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Aksi</th>
+              <tr className="border-b border-border bg-muted/50 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <th className="px-5 py-3.5">Nama Kategori</th>
+                <th className="px-5 py-3.5">Deskripsi</th>
+                <th className="px-5 py-3.5">Status</th>
+                <th className="px-5 py-3.5">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {(categories ?? []).map((cat) => (
-                <tr key={cat.id}>
+                <tr key={cat.id} className="transition-colors hover:bg-muted/30">
                   {editingId === cat.id ? (
                     <>
-                      <td className="px-4 py-2"><Input value={editNama} onChange={(e) => setEditNama(e.target.value)} className="h-8 text-sm" /></td>
-                      <td className="px-4 py-2" colSpan={2}><Input value={editDeskripsi} onChange={(e) => setEditDeskripsi(e.target.value)} className="h-8 text-sm" placeholder="Deskripsi" /></td>
-                      <td className="px-4 py-2">
+                      <td className="px-5 py-2.5"><Input value={editNama} onChange={(e) => setEditNama(e.target.value)} className="h-8 text-sm" /></td>
+                      <td className="px-5 py-2.5" colSpan={2}><Input value={editDeskripsi} onChange={(e) => setEditDeskripsi(e.target.value)} className="h-8 text-sm" placeholder="Deskripsi" /></td>
+                      <td className="px-5 py-2.5">
                         <div className="flex gap-1">
                           <Button size="sm" disabled={!editNama.trim()} onClick={() => handleEdit(cat.id)}><Check size={14} /></Button>
                           <Button size="sm" variant="outline" onClick={() => setEditingId(null)}><XIcon size={14} /></Button>
@@ -131,24 +134,24 @@ export default function CategoriesPage() {
                     </>
                   ) : (
                     <>
-                      <td className="px-4 py-3 font-medium">{cat.nama_kategori}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{cat.deskripsi ?? "—"}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1.5 text-xs ${cat.is_active ? "text-emerald-600" : "text-slate-400"}`}>
-                          <span className={`inline-block h-2 w-2 rounded-full ${cat.is_active ? "bg-emerald-500" : "bg-slate-300"}`} />
+                      <td className="px-5 py-3.5 font-semibold text-foreground">{cat.nama_kategori}</td>
+                      <td className="px-5 py-3.5 text-muted-foreground">{cat.deskripsi ?? <span className="italic text-muted-foreground/50">—</span>}</td>
+                      <td className="px-5 py-3.5">
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${cat.is_active ? "text-accent" : "text-slate-400"}`}>
+                          <span className={`inline-block h-2 w-2 rounded-full ${cat.is_active ? "bg-accent" : "bg-slate-300"}`} />
                           {cat.is_active ? "Aktif" : "Nonaktif"}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5">
                         <div className="flex gap-1">
                           <button onClick={() => { setEditingId(cat.id); setEditNama(cat.nama_kategori); setEditDeskripsi(cat.deskripsi ?? ""); }}
-                            className="rounded p-1 text-muted-foreground hover:bg-muted" title="Edit"><Pencil size={14} /></button>
+                            className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Edit"><Pencil size={14} /></button>
                           <button onClick={() => handleToggleActive(cat.id, cat.is_active)}
-                            className="rounded p-1 text-muted-foreground hover:bg-muted" title={cat.is_active ? "Nonaktifkan" : "Aktifkan"}>
+                            className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors" title={cat.is_active ? "Nonaktifkan" : "Aktifkan"}>
                             {cat.is_active ? <XIcon size={14} /> : <Check size={14} />}
                           </button>
                           <button onClick={() => { if (confirm("Hapus kategori ini?")) del.mutate(cat.id); }}
-                            className="rounded p-1 text-red-500 hover:bg-red-50" title="Hapus"><Trash2 size={14} /></button>
+                            className="rounded p-1.5 text-destructive hover:bg-red-50 transition-colors" title="Hapus"><Trash2 size={14} /></button>
                         </div>
                       </td>
                     </>
@@ -157,7 +160,7 @@ export default function CategoriesPage() {
               ))}
             </tbody>
           </table>
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

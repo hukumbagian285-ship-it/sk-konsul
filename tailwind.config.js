@@ -5,17 +5,17 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ["Fraunces", "ui-serif", "Georgia", "serif"],
-        body: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["EB Garamond", "ui-serif", "Georgia", "serif"],
+        body: ["Lato", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       colors: {
         primary: {
-          DEFAULT: "#2563EB",
+          DEFAULT: "#0F172A",
           foreground: "#F8FAFC",
         },
         accent: {
-          DEFAULT: "#059669",
+          DEFAULT: "#0369A1",
           foreground: "#F8FAFC",
         },
         warning: {
@@ -23,7 +23,7 @@ export default {
           foreground: "#F8FAFC",
         },
         background: "#F8FAFC",
-        foreground: "#0F172A",
+        foreground: "#020617",
         card: "#FFFFFF",
         border: "#E2E8F0",
         muted: {

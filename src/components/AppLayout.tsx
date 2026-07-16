@@ -88,6 +88,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   Admin
                 </p>
               )}
+              <NavLink to="/admin/template" icon={FileText} label="Template" active={location.pathname === "/admin/template"} collapsed={collapsed} />
               <NavLink to="/admin/kategori" icon={FolderKanban} label="Kategori" active={location.pathname === "/admin/kategori"} collapsed={collapsed} />
               <NavLink to="/admin/instansi" icon={Building2} label="Instansi" active={location.pathname === "/admin/instansi"} collapsed={collapsed} />
               <NavLink to="/admin/akun" icon={Users} label="Akun" active={location.pathname === "/admin/akun"} collapsed={collapsed} />

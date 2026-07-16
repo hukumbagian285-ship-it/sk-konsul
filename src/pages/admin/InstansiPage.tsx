@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Plus, Pencil, Trash2, Loader2, Check, X as XIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Check, X as XIcon, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,10 +36,10 @@ export default function InstansiPage() {
 
   return (
     <div className="w-full max-w-5xl">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-8 border-b border-border pb-6 flex items-start justify-between">
         <div>
-          <h1 className="font-display text-xl font-semibold text-foreground">Instansi / OPD</h1>
-          <p className="text-sm text-muted-foreground">Kelola daftar perangkat daerah</p>
+          <h1 className="font-display text-2xl font-semibold text-foreground">Instansi / OPD</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Kelola daftar perangkat daerah</p>
         </div>
         <Button size="sm" onClick={() => setAdding(true)}>
           <Plus size={16} /> Tambah
@@ -47,8 +47,8 @@ export default function InstansiPage() {
       </div>
 
       {adding && (
-        <Card className="mb-4 border-primary/30">
-          <CardContent className="space-y-3 pt-4">
+        <Card className="mb-6 border-accent/30">
+          <CardContent className="space-y-3 pt-5">
             <Input placeholder="Kode (contoh: DISKOMINFO)" value={kode} onChange={(e) => setKode(e.target.value)} autoFocus />
             <Input placeholder="Nama instansi" value={nama} onChange={(e) => setNama(e.target.value)} />
             <div className="flex gap-2">
@@ -62,7 +62,10 @@ export default function InstansiPage() {
       {/* mobile card list */}
       <div className="divide-y divide-border rounded-lg border md:hidden">
         {instansi?.length === 0 && (
-          <p className="p-6 text-center text-sm text-muted-foreground">Belum ada instansi.</p>
+          <div className="flex flex-col items-center justify-center py-12">
+            <Building2 size={32} className="text-muted-foreground/30" />
+            <p className="mt-2 text-sm text-muted-foreground">Belum ada instansi.</p>
+          </div>
         )}
         {(instansi ?? []).map((i) => (
           <div key={i.id} className="flex items-center justify-between gap-4 px-4 py-3">
@@ -76,14 +79,14 @@ export default function InstansiPage() {
             ) : (
               <>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground">{i.nama_instansi}</p>
-                  <p className="text-xs text-muted-foreground">Kode: {i.kode_instansi}</p>
+                  <p className="text-sm font-semibold text-foreground">{i.nama_instansi}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Kode: {i.kode_instansi}</p>
                 </div>
                 <div className="flex items-center gap-1">
                   <button onClick={() => { setEditingId(i.id); setEditKode(i.kode_instansi); setEditNama(i.nama_instansi); }}
-                    className="rounded p-1 text-muted-foreground hover:bg-muted" title="Edit"><Pencil size={14} /></button>
+                    className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Edit"><Pencil size={14} /></button>
                   <button onClick={() => { if (confirm(`Hapus ${i.nama_instansi}?`)) del.mutate(i.id); }}
-                    className="rounded p-1 text-red-500 hover:bg-red-50" title="Hapus"><Trash2 size={14} /></button>
+                    className="rounded p-1.5 text-destructive hover:bg-red-50 transition-colors" title="Hapus"><Trash2 size={14} /></button>
                 </div>
               </>
             )}
@@ -92,24 +95,24 @@ export default function InstansiPage() {
       </div>
 
       {/* desktop table */}
-      <Card className="hidden md:block">
-        <CardContent className="p-0">
+      <Card className="hidden md:block overflow-hidden">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
-                <th className="px-4 py-3 font-medium">Kode</th>
-                <th className="px-4 py-3 font-medium">Nama Instansi</th>
-                <th className="px-4 py-3 font-medium">Aksi</th>
+              <tr className="border-b border-border bg-muted/50 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <th className="px-5 py-3.5">Kode</th>
+                <th className="px-5 py-3.5">Nama Instansi</th>
+                <th className="px-5 py-3.5">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {(instansi ?? []).map((i) => (
-                <tr key={i.id}>
+                <tr key={i.id} className="transition-colors hover:bg-muted/30">
                   {editingId === i.id ? (
                     <>
-                      <td className="px-4 py-2"><Input value={editKode} onChange={(e) => setEditKode(e.target.value)} className="h-8 w-28 text-sm" /></td>
-                      <td className="px-4 py-2"><Input value={editNama} onChange={(e) => setEditNama(e.target.value)} className="h-8 text-sm" /></td>
-                      <td className="px-4 py-2">
+                      <td className="px-5 py-2.5"><Input value={editKode} onChange={(e) => setEditKode(e.target.value)} className="h-8 w-28 text-sm" /></td>
+                      <td className="px-5 py-2.5"><Input value={editNama} onChange={(e) => setEditNama(e.target.value)} className="h-8 text-sm" /></td>
+                      <td className="px-5 py-2.5">
                         <div className="flex gap-1">
                           <Button size="sm" disabled={!editKode.trim() || !editNama.trim()} onClick={() => handleEdit(i.id)}><Check size={14} /></Button>
                           <Button size="sm" variant="outline" onClick={() => setEditingId(null)}><XIcon size={14} /></Button>
@@ -118,14 +121,14 @@ export default function InstansiPage() {
                     </>
                   ) : (
                     <>
-                      <td className="px-4 py-3 font-mono text-xs uppercase">{i.kode_instansi}</td>
-                      <td className="px-4 py-3 font-medium">{i.nama_instansi}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3.5 font-mono text-xs font-medium uppercase text-muted-foreground">{i.kode_instansi}</td>
+                      <td className="px-5 py-3.5 font-semibold text-foreground">{i.nama_instansi}</td>
+                      <td className="px-5 py-3.5">
                         <div className="flex gap-1">
                           <button onClick={() => { setEditingId(i.id); setEditKode(i.kode_instansi); setEditNama(i.nama_instansi); }}
-                            className="rounded p-1 text-muted-foreground hover:bg-muted" title="Edit"><Pencil size={14} /></button>
+                            className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors" title="Edit"><Pencil size={14} /></button>
                           <button onClick={() => { if (confirm(`Hapus ${i.nama_instansi}?`)) del.mutate(i.id); }}
-                            className="rounded p-1 text-red-500 hover:bg-red-50" title="Hapus"><Trash2 size={14} /></button>
+                            className="rounded p-1.5 text-destructive hover:bg-red-50 transition-colors" title="Hapus"><Trash2 size={14} /></button>
                         </div>
                       </td>
                     </>
@@ -134,7 +137,7 @@ export default function InstansiPage() {
               ))}
             </tbody>
           </table>
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

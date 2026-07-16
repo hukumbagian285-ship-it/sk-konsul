@@ -1,0 +1,2 @@
+- [x] Task 1: Collapsible Sidebar
+- [ ] Task 2: ... (pending)

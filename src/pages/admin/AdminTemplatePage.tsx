@@ -51,10 +51,10 @@ export default function AdminTemplatePage() {
 
   return (
     <div className="w-full max-w-5xl">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-8 border-b border-border pb-6 flex items-start justify-between">
         <div>
-          <h1 className="font-display text-xl font-semibold text-foreground">Template Dokumen</h1>
-          <p className="text-sm text-muted-foreground">Kelola template dokumen SK</p>
+          <h1 className="font-display text-2xl font-semibold text-foreground">Template Dokumen</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Kelola template dokumen SK</p>
         </div>
         <Button size="sm" onClick={() => setAdding(true)}>
           <Plus size={16} /> Tambah
@@ -62,8 +62,8 @@ export default function AdminTemplatePage() {
       </div>
 
       {adding && (
-        <Card className="mb-4 border-primary/30">
-          <CardContent className="space-y-3 pt-4">
+        <Card className="mb-6 border-accent/30">
+          <CardContent className="space-y-3 pt-5">
             <Input placeholder="Nama template (e.g. NODIS, SK)" value={nama} onChange={(e) => setNama(e.target.value)} autoFocus />
             <Input placeholder="Deskripsi (opsional)" value={deskripsi} onChange={(e) => setDeskripsi(e.target.value)} />
             <Input placeholder="Google Drive File ID" value={driveFileId} onChange={(e) => setDriveFileId(e.target.value)} />
@@ -76,13 +76,16 @@ export default function AdminTemplatePage() {
         </Card>
       )}
 
-      <Card>
+      <Card className="overflow-hidden">
         <CardContent className="divide-y divide-border p-0">
           {templates?.length === 0 && (
-            <p className="p-6 text-center text-sm text-muted-foreground">Belum ada template.</p>
+            <div className="flex flex-col items-center justify-center py-12">
+              <FileText size={32} className="text-muted-foreground/30" />
+              <p className="mt-2 text-sm text-muted-foreground">Belum ada template.</p>
+            </div>
           )}
           {(templates ?? []).map((t) => (
-            <div key={t.id} className="flex items-center justify-between gap-4 px-4 py-3">
+            <div key={t.id} className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-muted/30">
               {editingId === t.id ? (
                 <div className="flex flex-1 flex-col gap-2">
                   <Input value={editNama} onChange={(e) => setEditNama(e.target.value)} className="h-8 text-sm" />
@@ -101,11 +104,13 @@ export default function AdminTemplatePage() {
               ) : (
                 <>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <FileText size={14} className="text-muted-foreground shrink-0" />
-                      <p className="text-sm font-medium text-foreground">{t.nama_template}</p>
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                        <FileText size={14} />
+                      </div>
+                      <p className="text-sm font-semibold text-foreground">{t.nama_template}</p>
                     </div>
-                    {t.deskripsi && <p className="mt-0.5 text-xs text-muted-foreground">{t.deskripsi}</p>}
+                    {t.deskripsi && <p className="mt-1 ml-10 text-xs text-muted-foreground">{t.deskripsi}</p>}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <button
@@ -116,14 +121,14 @@ export default function AdminTemplatePage() {
                         setEditDriveFileId(t.drive_file_id);
                         setEditAturan(t.aturan_penulisan ?? "");
                       }}
-                      className="rounded p-1 text-muted-foreground hover:bg-muted"
+                      className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors"
                       title="Edit"
                     >
                       <Pencil size={14} />
                     </button>
                     <button
                       onClick={() => { if (confirm("Hapus template ini?")) del.mutate(t.id); }}
-                      className="rounded p-1 text-red-500 hover:bg-red-50"
+                      className="rounded p-1.5 text-destructive hover:bg-red-50 transition-colors"
                       title="Hapus"
                     >
                       <Trash2 size={14} />
