@@ -9,7 +9,7 @@ export default function TemplateListPage() {
   if (isLoading) return <div className="flex justify-center py-20"><Loader2 size={24} className="animate-spin text-muted-foreground" /></div>;
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="w-full max-w-5xl">
       <div className="mb-6">
         <h1 className="font-display text-xl font-semibold text-foreground">Template Dokumen</h1>
         <p className="text-sm text-muted-foreground">Panduan format dan contoh dokumen SK</p>
