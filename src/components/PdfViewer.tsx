@@ -88,13 +88,8 @@ export default function PdfViewer({
       </div>
 
       <div ref={scrollRef} className="relative flex-1 min-h-0 w-full overflow-auto rounded-md border border-border">
-        {loading && (
-          <div className="flex h-64 items-center justify-center">
-            <Loader2 size={24} className="animate-spin text-muted-foreground" />
-          </div>
-        )}
         <Document file={url} onLoadSuccess={onLoadSuccess} onLoadError={() => setLoading(false)}>
-          <div className="relative">
+          <div className={loading ? "invisible" : "relative"}>
             {preloadPages.map((p) => (
               <div key={p} className={p === pageNumber ? "" : "absolute inset-0 pointer-events-none opacity-0"}>
                 <AnnotatedPage
@@ -111,6 +106,14 @@ export default function PdfViewer({
             ))}
           </div>
         </Document>
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background">
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 size={32} className="animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Memuat dokumen...</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {numPages > 0 && (
