@@ -62,7 +62,8 @@ export default function SubmissionForm() {
 
       if (error || !submission) throw error;
 
-      const folderPath = `${instansiId}/${submission.nomor_tiket}`;
+      const instansiName = instansiList?.find(i => i.id === instansiId)?.nama_instansi ?? instansiId;
+      const folderPath = `${instansiName}/${submission.nomor_tiket}`;
 
       try {
         const gasResult = await uploadViaGas(draf.file, folderPath);
