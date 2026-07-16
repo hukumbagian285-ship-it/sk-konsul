@@ -36,6 +36,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     try { return localStorage.getItem("sk_sidebar_collapsed") === "true"; }
     catch { return false; }
   });
+  const [showMobileAdmin, setShowMobileAdmin] = React.useState(false);
 
   function toggleSidebar() {
     setCollapsed((c) => {
@@ -142,10 +143,29 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <span className="text-[10px]">Template</span>
         </Link>
         {user?.role === "super_admin" && (
-          <Link to="/admin/kategori" className={`flex flex-col items-center gap-0.5 ${location.pathname.startsWith("/admin") ? "text-primary" : "text-muted-foreground"}`}>
-            <FolderKanban size={20} />
-            <span className="text-[10px]">Admin</span>
-          </Link>
+          <div className="relative">
+            <button
+              onClick={() => setShowMobileAdmin((p) => !p)}
+              className={`flex flex-col items-center gap-0.5 ${showMobileAdmin || location.pathname.startsWith("/admin") ? "text-primary" : "text-muted-foreground"}`}
+            >
+              <FolderKanban size={20} />
+              <span className="text-[10px]">Admin</span>
+            </button>
+            {showMobileAdmin && (
+              <div className="absolute bottom-full left-1/2 z-50 mb-2 flex w-40 -translate-x-1/2 flex-col gap-1 rounded-lg border border-border bg-card p-2 shadow-lg">
+                {["kategori", "instansi", "akun", "template"].map((m) => (
+                  <Link
+                    key={m}
+                    to={`/admin/${m}`}
+                    onClick={() => setShowMobileAdmin(false)}
+                    className={`rounded-md px-3 py-2 text-sm capitalize ${location.pathname === `/admin/${m}` ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"}`}
+                  >
+                    {m}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </nav>
 
