@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, FileText, History, UploadCloud, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, FileText, History, UploadCloud, Loader2, CheckCircle, AlertCircle, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useSubmission, useVersions, useStatusHistory, useUpdateStatus, useCreateVersion, useComments, useCreateComment } from "@/lib/api";
 import { uploadViaGas } from "@/lib/gas-upload";
 import PdfViewer from "@/components/PdfViewer";
-import CommentSidebar from "@/components/CommentSidebar";
+import CommentModal from "@/components/CommentModal";
 import CommentPopover from "@/components/CommentPopover";
 import FinalisasiModal from "@/components/FinalisasiModal";
 
@@ -32,6 +32,7 @@ export default function SubmissionDetail() {
   const [annotationMode, setAnnotationMode] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<{ page: number; x: number; y: number; w: number; h: number } | null>(null);
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
+  const [showComments, setShowComments] = useState(false);
 
   const createComment = useCreateComment();
 
@@ -43,7 +44,7 @@ export default function SubmissionDetail() {
   const usr = user!;
 
   const role = usr.role ?? "pemohon";
-  const bolehKomentar = role === "staf_hukum" || role === "pimpinan" || role === "super_admin";
+  const bolehLihatKomentar = !!id;
   const transisiTersedia = TRANSISI_SAH[role]?.[sub.status] ?? [];
   const bolehUploadVersi = (role === "pemohon" && sub.pemohon_id === usr.id) || role === "super_admin";
   const latestVersion = (versions ?? [])[0];
@@ -128,8 +129,14 @@ export default function SubmissionDetail() {
 
       <div className="flex flex-1 flex-col gap-6 min-h-0 pb-6 lg:flex-row">
         <Card className="flex min-h-0 flex-1 flex-col">
-          <CardHeader className="flex-shrink-0">
+          <CardHeader className="flex-shrink-0 flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2"><FileText size={16} /> Dokumen</CardTitle>
+            {bolehLihatKomentar && (
+              <button onClick={() => setShowComments(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
+                <MessageSquare size={14} /> Komentar
+              </button>
+            )}
           </CardHeader>
           <CardContent className="flex flex-1 min-h-0 flex-col p-0">
             {latestVersion ? (
@@ -214,18 +221,6 @@ export default function SubmissionDetail() {
             </Card>
           )}
 
-          {bolehKomentar && (
-            <Card>
-              <CardContent className="p-4">
-                <CommentSidebar
-                  submissionId={sub.id}
-                  onJumpToPage={onJumpToPage}
-                  highlightedCommentId={highlightedCommentId ?? undefined}
-                />
-              </CardContent>
-            </Card>
-          )}
-
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><History size={16} /> Riwayat Status</CardTitle>
@@ -246,6 +241,14 @@ export default function SubmissionDetail() {
           </Card>
         </div>
       </div>
+
+      <CommentModal
+        open={showComments}
+        onClose={() => setShowComments(false)}
+        submissionId={sub.id}
+        onJumpToPage={onJumpToPage}
+        highlightedCommentId={highlightedCommentId ?? undefined}
+      />
 
       <FinalisasiModal
         open={showFinalModal}
