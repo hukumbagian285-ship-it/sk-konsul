@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, FileText, History, UploadCloud, Loader2, CheckCircle, AlertCircle, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,6 @@ import { useAuth } from "@/lib/auth-context";
 import { useSubmission, useVersions, useStatusHistory, useUpdateStatus, useCreateVersion, useComments, useCreateComment } from "@/lib/api";
 import { uploadViaGas } from "@/lib/gas-upload";
 import PdfViewer from "@/components/PdfViewer";
-import CommentModal from "@/components/CommentModal";
 import CommentPopover from "@/components/CommentPopover";
 import FinalisasiModal from "@/components/FinalisasiModal";
 
@@ -32,7 +31,6 @@ export default function SubmissionDetail() {
   const [annotationMode, setAnnotationMode] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<{ page: number; x: number; y: number; w: number; h: number } | null>(null);
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
-  const [showComments, setShowComments] = useState(false);
 
   const createComment = useCreateComment();
 
@@ -48,6 +46,18 @@ export default function SubmissionDetail() {
   const transisiTersedia = TRANSISI_SAH[role]?.[sub.status] ?? [];
   const bolehUploadVersi = (role === "pemohon" && sub.pemohon_id === usr.id) || role === "super_admin";
   const latestVersion = (versions ?? [])[0];
+  const commentsThisPage = useMemo(() => comments.filter((c) => c.halaman === currentPage), [comments, currentPage]);
+
+  const getPopoverStyle = useCallback(() => {
+    if (!selectedPosition || selectedPosition.page !== currentPage) return null;
+    const pageEl = document.querySelector(`[data-page-number="${currentPage}"]`);
+    if (!pageEl) return null;
+    const r = pageEl.getBoundingClientRect();
+    return {
+      top: r.top + (selectedPosition.y / 100) * r.height,
+      left: r.left + (selectedPosition.x / 100) * r.width + 10,
+    };
+  }, [selectedPosition, currentPage]);
 
   function handleTransisi(status: StatusSK) {
     if (status === "Finalisasi") {
@@ -61,11 +71,6 @@ export default function SubmissionDetail() {
     await updateStatus.mutateAsync({ id: sub!.id, status: "Finalisasi" as StatusSK });
     await supabase.from("sk_submissions").update({ nomor_sk: nomorSk }).eq("id", sub!.id);
     setShowFinalModal(false);
-  }
-
-  function onJumpToPage(page: number) {
-    setCurrentPage(page);
-    setHighlightedCommentId(null);
   }
 
   function handleSubmitAnnotation(data: { warna: string; pasal: string | null; komentar: string }) {
@@ -128,50 +133,77 @@ export default function SubmissionDetail() {
       )}
 
       <div className="flex flex-1 flex-col gap-6 min-h-0 pb-6 lg:flex-row">
-        <Card className="flex min-h-0 flex-1 flex-col">
-          <CardHeader className="flex-shrink-0 flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2"><FileText size={16} /> Dokumen</CardTitle>
-            {bolehLihatKomentar && (
-              <button onClick={() => setShowComments(true)}
-                className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
-                <MessageSquare size={14} /> Komentar
-              </button>
-            )}
-          </CardHeader>
-          <CardContent className="flex flex-1 min-h-0 flex-col p-0">
-            {latestVersion ? (
-              <PdfViewer
-                driveFileId={latestVersion.drive_file_id}
-                comments={comments}
-                annotationMode={annotationMode}
-                onToggleAnnotation={() => setAnnotationMode((a) => !a)}
-                selectedPosition={selectedPosition}
-                onSelectPosition={setSelectedPosition}
-                onCommentClick={(commentId) => {
-                  const c = comments.find((x) => x.id === commentId);
-                  if (c?.halaman) setCurrentPage(c.halaman);
-                  setHighlightedCommentId(commentId);
-                }}
-                onPageChange={setCurrentPage}
-              />
-            ) : (
-              <div className="flex flex-1 items-center justify-center">
-                <p className="text-sm text-muted-foreground">Belum ada dokumen.</p>
+        <div className="flex min-h-0 flex-1 gap-4">
+          <Card className="flex min-h-0 flex-1 flex-col">
+            <CardHeader className="flex-shrink-0 flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2"><FileText size={16} /> Dokumen</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-1 min-h-0 flex-col p-0">
+              {latestVersion ? (
+                <PdfViewer
+                  driveFileId={latestVersion.drive_file_id}
+                  comments={comments}
+                  annotationMode={annotationMode}
+                  onToggleAnnotation={() => setAnnotationMode((a) => !a)}
+                  selectedPosition={selectedPosition}
+                  onSelectPosition={setSelectedPosition}
+                  onCommentClick={(commentId) => {
+                    const c = comments.find((x) => x.id === commentId);
+                    if (c?.halaman) setCurrentPage(c.halaman);
+                    setHighlightedCommentId(commentId);
+                  }}
+                  onPageChange={setCurrentPage}
+                />
+              ) : (
+                <div className="flex flex-1 items-center justify-center">
+                  <p className="text-sm text-muted-foreground">Belum ada dokumen.</p>
+                </div>
+              )}
+              {selectedPosition?.page === currentPage && (
+                <CommentPopover
+                  style={getPopoverStyle() ?? { top: 0, left: 0 }}
+                  onSubmit={handleSubmitAnnotation}
+                  onCancel={() => setSelectedPosition(null)}
+                  pending={createComment.isPending}
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          {bolehLihatKomentar && commentsThisPage.length > 0 && (
+            <div className="hidden w-[300px] shrink-0 lg:block">
+              <h3 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <MessageSquare size={13} /> Komentar Halaman {currentPage}
+              </h3>
+              <div className="space-y-2 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+                {commentsThisPage.map((c) => (
+                  <div
+                    key={c.id}
+                    className={`rounded-md border p-3 transition-colors hover:bg-muted/50 cursor-pointer ${
+                      highlightedCommentId === c.id ? "border-primary bg-primary/5" : "border-border"
+                    }`}
+                    onClick={() => {
+                      setHighlightedCommentId(c.id);
+                      setTimeout(() => setHighlightedCommentId(null), 3000);
+                    }}
+                  >
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs font-medium">
+                        {c.warna && <span className={`inline-block h-2 w-2 rounded-full ${{ merah: "bg-red-500", kuning: "bg-yellow-500", hijau: "bg-green-500" }[c.warna] ?? "bg-gray-400"}`} />}
+                        {(c as any).user_nama?.nama_lengkap}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">{formatTanggal(c.created_at)}</span>
+                    </div>
+                    {c.lokasi_pasal && (
+                      <Badge className="border-accent/30 bg-emerald-50 text-[10px] text-accent mb-1">{c.lokasi_pasal}</Badge>
+                    )}
+                    <p className="text-xs text-foreground">{c.komentar}</p>
+                  </div>
+                ))}
               </div>
-            )}
-            {selectedPosition?.page === currentPage && (
-              <CommentPopover
-                style={{
-                  top: selectedPosition.y + 60,
-                  left: selectedPosition.x + 20,
-                }}
-                onSubmit={handleSubmitAnnotation}
-                onCancel={() => setSelectedPosition(null)}
-                pending={createComment.isPending}
-              />
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          )}
+        </div>
 
         <div className="w-full flex-shrink-0 space-y-6 overflow-y-auto lg:w-[380px]">
           {bolehUploadVersi && (
@@ -241,14 +273,6 @@ export default function SubmissionDetail() {
           </Card>
         </div>
       </div>
-
-      <CommentModal
-        open={showComments}
-        onClose={() => setShowComments(false)}
-        submissionId={sub.id}
-        onJumpToPage={onJumpToPage}
-        highlightedCommentId={highlightedCommentId ?? undefined}
-      />
 
       <FinalisasiModal
         open={showFinalModal}
