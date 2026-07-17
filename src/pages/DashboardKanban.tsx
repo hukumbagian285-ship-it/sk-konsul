@@ -42,7 +42,7 @@ export default function DashboardKanban() {
   const [filterInstansi, setFilterInstansi] = React.useState("");
   const [search, setSearch] = React.useState("");
 
-  const { data: submissions, isLoading } = useSubmissions(user?.role ?? null, user?.id);
+  const { data: submissions, isLoading } = useSubmissions(user?.role ?? null, user?.id, user?.instansi_id);
   const { data: categories } = useCategories();
   const { data: instansi } = useInstansi();
 

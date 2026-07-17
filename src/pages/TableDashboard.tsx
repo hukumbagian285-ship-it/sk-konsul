@@ -9,7 +9,7 @@ import { useState } from "react";
 export default function TableDashboard() {
   const { user } = useAuth();
   const role = user?.role ?? "pemohon";
-  const { data: submissions, isLoading } = useSubmissions(role, user?.id);
+  const { data: submissions, isLoading } = useSubmissions(role, user?.id, user?.instansi_id);
   const [search, setSearch] = useState("");
 
   const filtered = (submissions ?? []).filter((s) => {

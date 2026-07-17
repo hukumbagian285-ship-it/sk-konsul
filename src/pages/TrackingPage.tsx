@@ -33,7 +33,7 @@ function Timeline({ status }: { status: string }) {
 
 export default function TrackingPage() {
   const { user } = useAuth();
-  const { data: submissions, isLoading } = useSubmissions("pemohon", user?.id);
+  const { data: submissions, isLoading } = useSubmissions("pemohon", user?.id, user?.instansi_id);
   const [expanded, setExpanded] = useState<string | null>(null);
 
   if (isLoading) return <div className="flex justify-center py-20"><Loader2 size={24} className="animate-spin text-muted-foreground" /></div>;

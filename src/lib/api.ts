@@ -22,7 +22,7 @@ export function useCategories() {
   });
 }
 
-export function useSubmissions(role: string | null, userId: string | undefined) {
+export function useSubmissions(role: string | null, userId?: string, instansiId?: string | null) {
   return useQuery({
     queryKey: ["submissions", role],
     queryFn: async () => {
@@ -31,8 +31,12 @@ export function useSubmissions(role: string | null, userId: string | undefined) 
         .select("*, kategori_nama:sk_categories(nama_kategori), instansi_nama:instansi(nama_instansi)")
         .order("created_at", { ascending: false });
 
-      if (role === "pemohon" && userId) {
-        query = query.eq("pemohon_id", userId);
+      if (role === "pemohon") {
+        if (instansiId) {
+          query = query.eq("instansi_id", instansiId);
+        } else if (userId) {
+          query = query.eq("pemohon_id", userId);
+        }
       }
 
       const { data } = await query;
