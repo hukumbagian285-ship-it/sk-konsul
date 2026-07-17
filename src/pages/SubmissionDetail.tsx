@@ -247,9 +247,14 @@ export default function SubmissionDetail() {
                       </span>
                       <span className="text-[10px] text-muted-foreground">{formatTanggal(c.created_at)}</span>
                     </div>
-                    {c.lokasi_pasal && (
-                      <Badge className="border-accent/30 bg-emerald-50 text-[10px] text-accent mb-1">{c.lokasi_pasal}</Badge>
-                    )}
+                    <div className="mb-1 flex gap-1 flex-wrap">
+                      {c.halaman && (
+                        <Badge className="border-primary/30 bg-blue-50 text-[10px] text-primary">Hal. {c.halaman}</Badge>
+                      )}
+                      {c.lokasi_pasal && (
+                        <Badge className="border-accent/30 bg-emerald-50 text-[10px] text-accent">{c.lokasi_pasal}</Badge>
+                      )}
+                    </div>
                     <p className="text-xs text-foreground">{c.komentar}</p>
                   </div>
                 ))}
