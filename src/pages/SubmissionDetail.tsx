@@ -33,6 +33,17 @@ export default function SubmissionDetail() {
   const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
 
   const createComment = useCreateComment();
+  const commentsThisPage = useMemo(() => comments.filter((c) => c.halaman === currentPage), [comments, currentPage]);
+  const getPopoverStyle = useCallback(() => {
+    if (!selectedPosition || selectedPosition.page !== currentPage) return null;
+    const pageEl = document.querySelector(`[data-page-number="${currentPage}"]`);
+    if (!pageEl) return null;
+    const r = pageEl.getBoundingClientRect();
+    return {
+      top: r.top + (selectedPosition.y / 100) * r.height,
+      left: r.left + (selectedPosition.x / 100) * r.width + 10,
+    };
+  }, [selectedPosition, currentPage]);
 
   if (isLoading) return <div className="flex flex-1 items-center justify-center"><Loader2 size={24} className="animate-spin text-muted-foreground" /></div>;
   if (!submission || !user) {
@@ -46,18 +57,6 @@ export default function SubmissionDetail() {
   const transisiTersedia = TRANSISI_SAH[role]?.[sub.status] ?? [];
   const bolehUploadVersi = (role === "pemohon" && sub.pemohon_id === usr.id) || role === "super_admin";
   const latestVersion = (versions ?? [])[0];
-  const commentsThisPage = useMemo(() => comments.filter((c) => c.halaman === currentPage), [comments, currentPage]);
-
-  const getPopoverStyle = useCallback(() => {
-    if (!selectedPosition || selectedPosition.page !== currentPage) return null;
-    const pageEl = document.querySelector(`[data-page-number="${currentPage}"]`);
-    if (!pageEl) return null;
-    const r = pageEl.getBoundingClientRect();
-    return {
-      top: r.top + (selectedPosition.y / 100) * r.height,
-      left: r.left + (selectedPosition.x / 100) * r.width + 10,
-    };
-  }, [selectedPosition, currentPage]);
 
   function handleTransisi(status: StatusSK) {
     if (status === "Finalisasi") {
