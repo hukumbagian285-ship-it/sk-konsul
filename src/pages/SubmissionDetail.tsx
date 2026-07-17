@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, FileText, History, UploadCloud, Loader2, CheckCircle, AlertCircle, MessageSquare } from "lucide-react";
+import { ArrowLeft, FileText, History, UploadCloud, Loader2, CheckCircle, AlertCircle, MessageSquare, Pencil, Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { STATUS_WARNA, TRANSISI_SAH, type StatusSK } from "@/lib/types";
 import { formatTanggal, cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { useSubmission, useVersions, useStatusHistory, useUpdateStatus, useCreateVersion, useComments, useCreateComment } from "@/lib/api";
+import { useSubmission, useVersions, useStatusHistory, useUpdateStatus, useCreateVersion, useComments, useCreateComment, useUpdateComment } from "@/lib/api";
 import { uploadViaGas } from "@/lib/gas-upload";
 import PdfViewer from "@/components/PdfViewer";
 import CommentPopover from "@/components/CommentPopover";
@@ -30,8 +30,12 @@ export default function SubmissionDetail() {
   const [showFinalModal, setShowFinalModal] = useState(false);
   const [annotationMode, setAnnotationMode] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<{ page: number; x: number; y: number; w: number; h: number } | null>(null);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editLokasiPasal, setEditLokasiPasal] = useState("");
 
   const createComment = useCreateComment();
+  const updateComment = useUpdateComment();
   const getPopoverStyle = useCallback(() => {
     if (!selectedPosition || selectedPosition.page !== currentPage) return null;
     const pageEl = document.querySelector(`[data-page-number="${currentPage}"]`);
@@ -240,22 +244,72 @@ export default function SubmissionDetail() {
               <CardContent className="space-y-2">
                 {comments.map((c) => (
                   <div key={c.id} className="rounded-md border border-border p-3">
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-xs font-medium">
-                        {c.warna && <span className={`inline-block h-2 w-2 rounded-full ${{ merah: "bg-red-500", kuning: "bg-yellow-500", hijau: "bg-green-500" }[c.warna] ?? "bg-gray-400"}`} />}
-                        {(c as any).user_nama?.nama_lengkap}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">{formatTanggal(c.created_at)}</span>
-                    </div>
-                    <div className="mb-1 flex gap-1 flex-wrap">
-                      {c.halaman && (
-                        <Badge className="border-primary/30 bg-blue-50 text-[10px] text-primary">Hal. {c.halaman}</Badge>
-                      )}
-                      {c.lokasi_pasal && (
-                        <Badge className="border-accent/30 bg-emerald-50 text-[10px] text-accent">{c.lokasi_pasal}</Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-foreground">{c.komentar}</p>
+                    {editingCommentId === c.id ? (
+                      <>
+                        <div className="mb-2 flex items-center gap-2">
+                          <input
+                            className="flex-1 rounded border border-border bg-transparent px-2 py-1 text-xs"
+                            placeholder="Lokasi pasal (opsional)"
+                            value={editLokasiPasal}
+                            onChange={(e) => setEditLokasiPasal(e.target.value)}
+                          />
+                          {c.halaman && (
+                            <Badge className="border-primary/30 bg-blue-50 text-[10px] text-primary shrink-0">Hal. {c.halaman}</Badge>
+                          )}
+                        </div>
+                        <textarea
+                          className="mb-2 w-full rounded border border-border bg-transparent px-2 py-1 text-xs resize-none"
+                          rows={3}
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                        />
+                        <div className="flex items-center gap-1">
+                          <button
+                            className="rounded p-1 text-muted-foreground hover:bg-muted transition-colors"
+                            onClick={() => {
+                              updateComment.mutate({ id: c.id, komentar: editText, lokasi_pasal: editLokasiPasal || null });
+                              setEditingCommentId(null);
+                            }}
+                            disabled={updateComment.isPending}
+                          ><Check size={14} /></button>
+                          <button
+                            className="rounded p-1 text-muted-foreground hover:bg-muted transition-colors"
+                            onClick={() => setEditingCommentId(null)}
+                          ><X size={14} /></button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 text-xs font-medium">
+                            {c.warna && <span className={`inline-block h-2 w-2 rounded-full ${{ merah: "bg-red-500", kuning: "bg-yellow-500", hijau: "bg-green-500" }[c.warna] ?? "bg-gray-400"}`} />}
+                            {(c as any).user_nama?.nama_lengkap}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] text-muted-foreground">{formatTanggal(c.created_at)}</span>
+                            {c.user_id === user?.id && (
+                              <button
+                                className="rounded p-1 text-muted-foreground hover:bg-muted transition-colors"
+                                onClick={() => {
+                                  setEditingCommentId(c.id);
+                                  setEditText(c.komentar);
+                                  setEditLokasiPasal(c.lokasi_pasal ?? "");
+                                }}
+                              ><Pencil size={12} /></button>
+                            )}
+                          </div>
+                        </div>
+                        <div className="mb-1 flex gap-1 flex-wrap">
+                          {c.halaman && (
+                            <Badge className="border-primary/30 bg-blue-50 text-[10px] text-primary">Hal. {c.halaman}</Badge>
+                          )}
+                          {c.lokasi_pasal && (
+                            <Badge className="border-accent/30 bg-emerald-50 text-[10px] text-accent">{c.lokasi_pasal}</Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-foreground">{c.komentar}</p>
+                      </>
+                    )}
                   </div>
                 ))}
               </CardContent>

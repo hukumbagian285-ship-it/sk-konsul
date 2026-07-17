@@ -16,33 +16,22 @@ export function useCategories() {
   return useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      const { data } = await supabase.from("sk_categories").select("*").eq("is_active", true).order("nama_kategori");
+      const { data } = await supabase.from("sk_categories").select("*").order("nama_kategori");
       return (data ?? []) as SkCategory[];
     },
   });
 }
 
-export function useSubmissions(role: string | null, userId?: string, instansiId?: string | null) {
+export function useSubmissions() {
   return useQuery({
-    queryKey: ["submissions", role],
+    queryKey: ["submissions"],
     queryFn: async () => {
-      let query = supabase
+      const { data } = await supabase
         .from("sk_submissions")
-        .select("*, kategori_nama:sk_categories(nama_kategori), instansi_nama:instansi(nama_instansi)")
+        .select("*, instansi_nama:instansi(nama_instansi), kategori_nama:sk_categories(nama_kategori), pemohon_nama:profiles!sk_submissions_pemohon_id_fkey(nama_lengkap)")
         .order("created_at", { ascending: false });
-
-      if (role === "pemohon") {
-        if (instansiId) {
-          query = query.eq("instansi_id", instansiId);
-        } else if (userId) {
-          query = query.eq("pemohon_id", userId);
-        }
-      }
-
-      const { data } = await query;
       return (data ?? []) as SkSubmission[];
     },
-    enabled: !!role,
   });
 }
 
@@ -52,7 +41,7 @@ export function useSubmission(id: string | undefined) {
     queryFn: async () => {
       const { data } = await supabase
         .from("sk_submissions")
-        .select("*, kategori_nama:sk_categories(nama_kategori), instansi_nama:instansi(nama_instansi)")
+        .select("*, instansi_nama:instansi(nama_instansi), kategori_nama:sk_categories(nama_kategori), pemohon_nama:profiles!sk_submissions_pemohon_id_fkey(nama_lengkap)")
         .eq("id", id)
         .single();
       return data as SkSubmission | null;
@@ -65,12 +54,19 @@ export function useVersions(submissionId: string | undefined) {
   return useQuery({
     queryKey: ["versions", submissionId],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("sk_versions")
-        .select("*")
-        .eq("submission_id", submissionId)
-        .order("versi_ke", { ascending: false });
+      const { data } = await supabase.from("sk_versions").select("*").eq("submission_id", submissionId).order("versi_ke", { ascending: false });
       return (data ?? []) as SkVersion[];
+    },
+    enabled: !!submissionId,
+  });
+}
+
+export function useStatusHistory(submissionId: string | undefined) {
+  return useQuery({
+    queryKey: ["status_history", submissionId],
+    queryFn: async () => {
+      const { data } = await supabase.from("sk_status_history").select("*, diubah_oleh_nama:profiles(nama_lengkap)").eq("submission_id", submissionId).order("created_at", { ascending: false });
+      return (data ?? []) as SkStatusHistory[];
     },
     enabled: !!submissionId,
   });
@@ -91,41 +87,43 @@ export function useComments(submissionId: string | undefined) {
   });
 }
 
-export function useStatusHistory(submissionId: string | undefined) {
+export function useTemplates() {
   return useQuery({
-    queryKey: ["status_history", submissionId],
+    queryKey: ["templates"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("sk_status_history")
-        .select("*, diubah_oleh_nama:profiles(nama_lengkap)")
-        .eq("submission_id", submissionId)
-        .order("created_at", { ascending: false });
-      return (data ?? []) as SkStatusHistory[];
+      const { data } = await supabase.from("sk_templates").select("*").order("created_at", { ascending: false });
+      return (data ?? []) as SkTemplate[];
     },
-    enabled: !!submissionId,
+  });
+}
+
+export function useCreateSubmission() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { judul_sk: string; deskripsi: string | null; kategori_id: string; pemohon_id: string; instansi_id: string }) => {
+      const { data, error } = await supabase.from("sk_submissions").insert(payload).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["submissions"] });
+    },
   });
 }
 
 export function useCreateVersion() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { submission_id: string; drive_file_id: string; catatan_perubahan: string | null; diunggah_oleh: string }) => {
-      const { data, error } = await supabase.from("sk_versions").insert(payload).select().single();
+    mutationFn: async (payload: { submission_id: string; drive_file_id: string; catatan_perubahan: string; diunggah_oleh: string }) => {
+      const { data: maxVer } = await supabase.from("sk_versions").select("versi_ke").eq("submission_id", payload.submission_id).order("versi_ke", { ascending: false }).limit(1);
+      const versi_ke = (maxVer?.[0]?.versi_ke ?? 0) + 1;
+      const { data, error } = await supabase.from("sk_versions").insert({ ...payload, versi_ke }).select().single();
       if (error) throw error;
       return data;
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["versions", data.submission_id] });
-    },
-  });
-}
-
-export function useCreateAttachment() {
-  return useMutation({
-    mutationFn: async (payload: { submission_id: string; nama_file: string; drive_file_id: string; tipe_file: string | null; ukuran_bytes: number | null; diunggah_oleh: string }) => {
-      const { data, error } = await supabase.from("sk_attachments").insert(payload).select().single();
-      if (error) throw error;
-      return data;
+      qc.invalidateQueries({ queryKey: ["submission", data.submission_id] });
     },
   });
 }
@@ -147,6 +145,30 @@ export function useCreateComment() {
       warna?: string | null;
     }) => {
       const { data, error } = await supabase.from("sk_comments").insert(payload).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["comments", data.submission_id] });
+    },
+  });
+}
+
+export function useUpdateComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: {
+      id: string;
+      komentar?: string;
+      lokasi_pasal?: string | null;
+      halaman?: number | null;
+      pos_x?: number | null;
+      pos_y?: number | null;
+      lebar?: number | null;
+      tinggi?: number | null;
+      warna?: string | null;
+    }) => {
+      const { data, error } = await supabase.from("sk_comments").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },
@@ -180,19 +202,23 @@ export function useCreateCategory() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["categories"] });
+    },
   });
 }
 
 export function useUpdateCategory() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...payload }: { id: string; nama_kategori?: string; deskripsi?: string | null; is_active?: boolean }) => {
-      const { data, error } = await supabase.from("sk_categories").update(payload).eq("id", id).select().single();
+    mutationFn: async (payload: { id: string; nama_kategori: string; deskripsi: string | null }) => {
+      const { data, error } = await supabase.from("sk_categories").update({ nama_kategori: payload.nama_kategori, deskripsi: payload.deskripsi }).eq("id", payload.id).select().single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["categories"] });
+    },
   });
 }
 
@@ -203,31 +229,37 @@ export function useDeleteCategory() {
       const { error } = await supabase.from("sk_categories").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["categories"] });
+    },
   });
 }
 
 export function useCreateInstansi() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { kode_instansi: string; nama_instansi: string }) => {
+    mutationFn: async (payload: { nama_instansi: string; kode_instansi: string }) => {
       const { data, error } = await supabase.from("instansi").insert(payload).select().single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["instansi"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["instansi"] });
+    },
   });
 }
 
 export function useUpdateInstansi() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...payload }: { id: string; kode_instansi?: string; nama_instansi?: string }) => {
-      const { data, error } = await supabase.from("instansi").update(payload).eq("id", id).select().single();
+    mutationFn: async (payload: { id: string; nama_instansi: string; kode_instansi: string }) => {
+      const { data, error } = await supabase.from("instansi").update({ nama_instansi: payload.nama_instansi, kode_instansi: payload.kode_instansi }).eq("id", payload.id).select().single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["instansi"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["instansi"] });
+    },
   });
 }
 
@@ -238,29 +270,38 @@ export function useDeleteInstansi() {
       const { error } = await supabase.from("instansi").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["instansi"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["instansi"] });
+    },
   });
 }
 
-export interface ProfileWithInstansi {
-  id: string;
-  nip: string;
-  nama_lengkap: string;
-  role: Role;
-  instansi_id: string | null;
-  instansi_nama?: { nama_instansi: string } | null;
-  created_at: string;
+export function useCreateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { nama_lengkap: string; role: string; instansi_id: string | null; nip: string | null; password: string }) => {
+      const { data, error } = await supabase.rpc("daftar_pengguna", {
+        p_nama_lengkap: payload.nama_lengkap,
+        p_role: payload.role,
+        p_instansi_id: payload.instansi_id,
+        p_nip: payload.nip,
+        p_password: payload.password,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
 }
 
-export function useAllUsers() {
+export function useUsers() {
   return useQuery({
     queryKey: ["users"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("*, instansi_nama:instansi(nama_instansi)")
-        .order("nama_lengkap");
-      return (data ?? []) as ProfileWithInstansi[];
+      const { data } = await supabase.from("profiles").select("*, instansi_nama:instansi(nama_instansi)").order("created_at", { ascending: false });
+      return data ?? [];
     },
   });
 }
@@ -268,12 +309,19 @@ export function useAllUsers() {
 export function useUpdateUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...payload }: { id: string; nama_lengkap?: string; role?: Role; instansi_id?: string | null }) => {
-      const { data, error } = await supabase.from("profiles").update(payload).eq("id", id).select().single();
+    mutationFn: async (payload: { id: string; nama_lengkap: string; role: string; instansi_id: string | null; nip: string | null }) => {
+      const { data, error } = await supabase.from("profiles").update({
+        nama_lengkap: payload.nama_lengkap,
+        role: payload.role,
+        instansi_id: payload.instansi_id,
+        nip: payload.nip,
+      }).eq("id", payload.id).select().single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+    },
   });
 }
 
@@ -284,84 +332,8 @@ export function useDeleteUser() {
       const { error } = await supabase.from("profiles").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
-  });
-}
-
-export function useCreateUser() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: { nip: string; nama_lengkap: string; role: Role; instansi_id: string | null; password: string }) => {
-      const { data, error } = await supabase.rpc("create_user", payload);
-      if (error) throw error;
-      return data;
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
-  });
-}
-
-export function useAllCategories() {
-  return useQuery({
-    queryKey: ["all-categories"],
-    queryFn: async () => {
-      const { data } = await supabase.from("sk_categories").select("*").order("nama_kategori");
-      return (data ?? []) as SkCategory[];
-    },
-  });
-}
-
-export function useTemplates() {
-  return useQuery({
-    queryKey: ["templates"],
-    queryFn: async () => {
-      const { data } = await supabase.from("sk_templates").select("*").order("nama_template");
-      return (data ?? []) as SkTemplate[];
-    },
-  });
-}
-
-export function useTemplate(id: string | undefined) {
-  return useQuery({
-    queryKey: ["template", id],
-    queryFn: async () => {
-      const { data } = await supabase.from("sk_templates").select("*").eq("id", id).single();
-      return data as SkTemplate | null;
-    },
-    enabled: !!id,
-  });
-}
-
-export function useCreateTemplate() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (payload: { nama_template: string; deskripsi: string | null; drive_file_id: string; aturan_penulisan: string | null }) => {
-      const { data, error } = await supabase.from("sk_templates").insert(payload).select().single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["templates"] }),
-  });
-}
-
-export function useUpdateTemplate() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, ...payload }: { id: string; nama_template?: string; deskripsi?: string | null; drive_file_id?: string; aturan_penulisan?: string | null }) => {
-      const { data, error } = await supabase.from("sk_templates").update(payload).eq("id", id).select().single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["templates"] }),
-  });
-}
-
-export function useDeleteTemplate() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("sk_templates").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["templates"] }),
   });
 }
